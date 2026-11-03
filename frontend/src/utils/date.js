@@ -3,3 +3,8 @@ export function formatDate(isoDate) {
   const [year, month, day] = isoDate.split('-')
   return `${day}/${month}/${year}`
 }
+
+// hoje -> "2026-11"
+export function currentMonth() {
+  return new Date().toISOString().slice(0, 7)
+}

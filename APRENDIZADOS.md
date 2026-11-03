@@ -137,3 +137,15 @@ CORS é uma regra do navegador. A página em localhost:5173 chamando localhost:8
 
 Pergunta: por que validar no backend se o frontend também pode validar?
 O frontend roda no navegador da pessoa, ela controla tudo ali. Dá pra pular a validação pelo DevTools ou chamando a API direto com curl. O backend é o único lugar que eu controlo, toda requisição passa por ele. Frontend valida pra dar resposta rápida, backend valida pra nada inválido entrar no banco.
+
+## Etapa 11
+
+1. Criei o ExpensesPage, a tela que guarda os filtros, chama os hooks e distribui tudo por props
+2. ExpenseFilters com mês e categoria. Mudar qualquer um volta pra página 1
+3. Summary mostra o total do mês e uma barra por categoria feita com CSS. A largura é a porcentagem calculada na hora, estado derivado
+4. Pagination usa o meta que a API devolve, só aparece com mais de uma página
+5. useExpenses recebe os filtros e o useEffect busca de novo quando eles mudam. Criar, editar ou remover recarrega a lista e o resumo
+6. ExpenseList virou só apresentação, recebe tudo por props e não busca nada
+
+Pergunta: quando vale a pena extrair um hook próprio?
+Quando a lógica tem estado e efeito próprios e não é desenho de tela, ou quando dois componentes iam repetir o mesmo código. Buscar lançamentos tem lista, erro, carregando e useEffect. No hook o componente só pede os dados e desenha.

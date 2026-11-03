@@ -1,8 +1,14 @@
 import { request } from './client'
 
-export async function listExpenses() {
-  const { data } = await request('/expenses')
-  return data
+// monta ?month=2026-11&category_id=2&page=1 só com o que foi informado
+export function listExpenses({ month, categoryId, page } = {}) {
+  const params = new URLSearchParams()
+  if (month) params.set('month', month)
+  if (categoryId) params.set('category_id', categoryId)
+  if (page) params.set('page', page)
+
+  const query = params.toString()
+  return request(`/expenses${query ? `?${query}` : ''}`) // devolve { data, meta, links }
 }
 
 export async function createExpense(values) {

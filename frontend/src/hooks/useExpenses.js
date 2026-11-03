@@ -1,51 +1,52 @@
 import { useEffect, useState } from 'react'
 import { createExpense, deleteExpense, listExpenses, updateExpense } from '../api/expenses'
 
-export function useExpenses() {
-  const [expenses, setExpenses] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+// recebe os filtros; sempre que mudarem, busca de novo
+export function useExpenses({ month, categoryId, page }) {
+  // version muda depois de criar, editar ou remover, para forçar uma nova busca
+  const [version, setVersion] = useState(0)
+  // o que foi carregado por último e para qual combinação de filtros
+  const [loaded, setLoaded] = useState({ key: null, expenses: [], meta: null, error: null })
 
-  // roda uma vez, quando o componente aparece na tela ([] = sem dependências)
+  const key = `${month}|${categoryId}|${page}|${version}`
+
+  // dependências: o efeito roda de novo quando month, categoryId, page ou version mudam
   useEffect(() => {
     let active = true
 
-    async function load() {
-      setLoading(true)
-      setError(null)
-      try {
-        const data = await listExpenses()
-        if (active) setExpenses(data)
-      } catch (err) {
-        if (active) setError(err.message)
-      } finally {
-        if (active) setLoading(false)
-      }
-    }
+    listExpenses({ month, categoryId, page })
+      .then((response) => {
+        if (active) setLoaded({ key, expenses: response.data, meta: response.meta, error: null })
+      })
+      .catch((err) => {
+        if (active) setLoaded({ key, expenses: [], meta: null, error: err.message })
+      })
 
-    load()
-
-    // se o componente sair da tela antes da resposta, ignora o resultado
+    // se os filtros mudarem antes da resposta chegar, ignora a resposta antiga
     return () => {
       active = false
     }
-  }, [])
+  }, [key, month, categoryId, page])
 
-  // cada operação chama a API e, se deu certo, atualiza a lista local sem recarregar
+  // estado derivado: está carregando se o que foi pedido ainda não é o que está carregado
+  const loading = loaded.key !== key
+
+  const reload = () => setVersion((current) => current + 1)
+
   async function add(values) {
-    const created = await createExpense(values)
-    setExpenses((current) => [created, ...current])
+    await createExpense(values)
+    reload()
   }
 
   async function update(id, values) {
-    const updated = await updateExpense(id, values)
-    setExpenses((current) => current.map((expense) => (expense.id === id ? updated : expense)))
+    await updateExpense(id, values)
+    reload()
   }
 
   async function remove(id) {
     await deleteExpense(id)
-    setExpenses((current) => current.filter((expense) => expense.id !== id))
+    reload()
   }
 
-  return { expenses, loading, error, add, update, remove }
+  return { expenses: loaded.expenses, meta: loaded.meta, loading, error: loaded.error, add, update, remove }
 }

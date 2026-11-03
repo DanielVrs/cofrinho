@@ -193,3 +193,11 @@ Token no localStorage é lido por qualquer JavaScript da página. Um script mali
 2. O resumo devolve budget_cents e over_budget por categoria, calculado na mesma consulta do SUM
 3. No front o formulário de categoria ganhou o campo de limite e passou a servir pra editar também
 4. O Summary mostra gasto / limite e um alerta em vermelho com as categorias que passaram
+
+### React Router
+
+1. Instalei o react-router e troquei as abas por rotas: /, /categories, /login e /register
+2. No App.jsx fica a tabela de rotas. Um grupo GuestOnly pra login e cadastro, um grupo RequireAuth pras páginas do app
+3. RequireAuth: sem usuário faz Navigate pra /login. GuestOnly: logado em /login vai pra /
+4. Layout tem o cabeçalho e o menu com NavLink, que marca a rota ativa sozinho, e o Outlet onde a página filha entra
+5. Agora a URL muda, o botão voltar funciona e dá pra abrir /categories direto

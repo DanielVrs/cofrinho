@@ -246,7 +246,15 @@ button.link {
   margin-top: 16px;
 }
 
-.tabs button.active {
+.tabs a {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.tabs a.active {
   background: #1f2937;
   color: #fff;
   border-color: #1f2937;

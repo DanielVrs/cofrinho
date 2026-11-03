@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import AuthForm from './AuthForm'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -8,7 +9,7 @@ const fields = [
   { name: 'password_confirmation', label: 'Confirme a senha', type: 'password' },
 ]
 
-export default function RegisterPage({ onSwitch }) {
+export default function RegisterPage() {
   const { register } = useAuth()
 
   return (
@@ -16,10 +17,7 @@ export default function RegisterPage({ onSwitch }) {
       <h2>Criar conta</h2>
       <AuthForm fields={fields} submitLabel="Cadastrar" onSubmit={register} />
       <p>
-        Já tem conta?{' '}
-        <button type="button" className="link" onClick={onSwitch}>
-          Entrar
-        </button>
+        Já tem conta? <Link to="/login">Entrar</Link>
       </p>
     </section>
   )

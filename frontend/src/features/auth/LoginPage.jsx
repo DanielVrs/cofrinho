@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import AuthForm from './AuthForm'
 import { useAuth } from '../../hooks/useAuth'
 
@@ -6,7 +7,7 @@ const fields = [
   { name: 'password', label: 'Senha', type: 'password' },
 ]
 
-export default function LoginPage({ onSwitch }) {
+export default function LoginPage() {
   const { login } = useAuth()
 
   return (
@@ -14,10 +15,7 @@ export default function LoginPage({ onSwitch }) {
       <h2>Entrar</h2>
       <AuthForm fields={fields} submitLabel="Entrar" onSubmit={login} />
       <p>
-        Não tem conta?{' '}
-        <button type="button" className="link" onClick={onSwitch}>
-          Cadastre-se
-        </button>
+        Não tem conta? <Link to="/register">Cadastre-se</Link>
       </p>
     </section>
   )

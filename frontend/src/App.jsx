@@ -1,56 +1,38 @@
-import { useState } from 'react'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
+import Layout from './components/Layout'
 import { AuthProvider } from './features/auth/AuthProvider'
 import LoginPage from './features/auth/LoginPage'
 import RegisterPage from './features/auth/RegisterPage'
+import { GuestOnly, RequireAuth } from './features/auth/RequireAuth'
 import CategoriesPage from './features/categories/CategoriesPage'
 import ExpensesPage from './features/expenses/ExpensesPage'
-import { useAuth } from './hooks/useAuth'
 import './App.css'
-
-// decide o que mostrar: login/cadastro ou o app
-function Screen() {
-  const { user, logout } = useAuth()
-  const [screen, setScreen] = useState('login')
-  const [page, setPage] = useState('expenses')
-
-  if (!user) {
-    return screen === 'login' ? (
-      <LoginPage onSwitch={() => setScreen('register')} />
-    ) : (
-      <RegisterPage onSwitch={() => setScreen('login')} />
-    )
-  }
-
-  return (
-    <>
-      <header className="user-bar">
-        <span>Olá, {user.name}</span>
-        <button type="button" onClick={logout}>
-          Sair
-        </button>
-      </header>
-
-      <nav className="tabs">
-        <button type="button" className={page === 'expenses' ? 'active' : ''} onClick={() => setPage('expenses')}>
-          Lançamentos
-        </button>
-        <button type="button" className={page === 'categories' ? 'active' : ''} onClick={() => setPage('categories')}>
-          Categorias
-        </button>
-      </nav>
-
-      {page === 'expenses' ? <ExpensesPage /> : <CategoriesPage />}
-    </>
-  )
-}
 
 function App() {
   return (
     <AuthProvider>
-      <main className="app">
-        <h1>Cofrinho</h1>
-        <Screen />
-      </main>
+      <BrowserRouter>
+        <main className="app">
+          <h1>Cofrinho</h1>
+          <Routes>
+            {/* públicas: só para quem não está logado */}
+            <Route element={<GuestOnly />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+            </Route>
+
+            {/* protegidas: exigem usuário, e usam o Layout com cabeçalho e menu */}
+            <Route element={<RequireAuth />}>
+              <Route element={<Layout />}>
+                <Route path="/" element={<ExpensesPage />} />
+                <Route path="/categories" element={<CategoriesPage />} />
+              </Route>
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
+      </BrowserRouter>
     </AuthProvider>
   )
 }

@@ -101,3 +101,15 @@ O banco já é feito pra isso. Somando no PHP eu trago todos os lançamentos pel
 
 Pergunta: o que o RefreshDatabase faz, e o que aconteceria sem ele?
 Roda as migrations num banco limpo e desfaz tudo no fim de cada teste. Sem ele um teste veria os dados do outro: o de nome repetido ia depender da ordem e o de paginação ia contar lançamento dos outros.
+
+## Etapa 8
+
+1. Tirei a tela de demonstração do Vite e deixei o App.jsx só montando a página
+2. Criei um array fixo de lançamentos no mesmo formato que a API devolve
+3. ExpenseList guarda a lista num useState e faz o map com key={expense.id}
+4. ExpenseItem recebe o lançamento por props e desenha uma linha com o botão Remover
+5. Remover chama setExpenses com um array novo sem o item (filter), nunca mexe no array atual
+6. formatCents(1250) devolve R$ 12,50 usando o Intl do navegador
+
+Pergunta: por que alterar uma variável comum não atualiza a tela, mas chamar a função do useState sim?
+O React não fica vigiando variável. Ele só redesenha o componente quando eu chamo a função do useState, que avisa que o estado mudou. Mudando uma variável comum o valor muda na memória mas ninguém avisa o React.

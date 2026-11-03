@@ -210,3 +210,11 @@ Token no localStorage é lido por qualquer JavaScript da página. Um script mali
 4. No front: fetch com credentials include, GET /sanctum/csrf-cookie antes do primeiro POST, e se vier 419 pega um token novo e tenta de novo
 5. Nos testes troquei Sanctum::actingAs por actingAs e coloquei um cabeçalho Origin padrão, senão a requisição não é "stateful" e não tem sessão. O teste de logout precisou de forgetGuards porque no teste os guards ficam em memória entre requisições
 6. Validei com curl: login 200, rota protegida 200, POST sem CSRF 419, logout 204, depois 401
+
+### TypeScript
+
+1. Instalei o typescript, criei o tsconfig.json em modo strict e renomeei todo .js/.jsx pra .ts/.tsx. O Vite já entende TypeScript, o tsc só confere os tipos
+2. Criei o src/types.ts com os formatos que a API devolve e recebe: User, Category, Expense, Summary, os inputs e os filtros
+3. O request<T> do client diz qual JSON espera, então quem chama listCategories() já recebe Category[] sem adivinhar
+4. Props de cada componente viraram uma interface. Erro que o tipo pegou: o AuthForm genérico não aceitava LoginInput porque interface não tem assinatura de índice; resolvi com a restrição { [K in keyof T]: string }
+5. O build agora roda tsc antes do vite build, então erro de tipo quebra o build

@@ -53,7 +53,10 @@ hooks/        useExpenses, useCategories: estado e busca de dados
 components/   componentes de UI reutilizáveis
 features/     telas por funcionalidade (expenses, categories, auth)
 utils/        formatação de moeda e datas
+types.ts      formatos que a API devolve e recebe (Category, Expense, Summary...)
 ```
+
+- Código em TypeScript estrito (`npm run typecheck`); `tsc` roda antes do build.
 
 - Formulários controlados; erros 422 da API exibidos ao lado do campo.
 - Nenhum componente mistura muitas responsabilidades.

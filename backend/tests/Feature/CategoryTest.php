@@ -71,3 +71,20 @@ test('não remove categoria em uso', function () {
 
     $this->assertDatabaseHas('categories', ['id' => $category->id]);
 });
+
+test('cria e atualiza categoria com limite mensal', function () {
+    $id = $this->postJson('/api/categories', ['name' => 'Mercado', 'color' => '#22AA88', 'budget_cents' => 50000])
+        ->assertCreated()
+        ->assertJsonPath('data.budget_cents', 50000)
+        ->json('data.id');
+
+    $this->putJson("/api/categories/{$id}", ['name' => 'Mercado', 'color' => '#22AA88', 'budget_cents' => null])
+        ->assertOk()
+        ->assertJsonPath('data.budget_cents', null);
+});
+
+test('não aceita limite mensal zero ou negativo', function () {
+    $this->postJson('/api/categories', ['name' => 'Mercado', 'color' => '#22AA88', 'budget_cents' => 0])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('budget_cents');
+});

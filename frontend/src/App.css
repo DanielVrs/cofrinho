@@ -164,7 +164,7 @@ button:disabled {
 
 .summary-row {
   display: grid;
-  grid-template-columns: 110px 1fr 100px;
+  grid-template-columns: 110px 1fr auto;
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
@@ -295,4 +295,31 @@ button.link {
 
 .section-head h2 {
   margin-right: 12px;
+}
+
+.alert {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  color: #b91c1c;
+}
+
+.summary-row.over .summary-value {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.summary-value small {
+  color: #6b7280;
+  font-weight: 400;
+}
+
+.category-form {
+  flex-wrap: wrap;
+}
+
+.category-form .form-actions {
+  flex-basis: auto;
 }

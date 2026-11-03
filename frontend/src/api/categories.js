@@ -10,6 +10,11 @@ export async function createCategory(values) {
   return data
 }
 
+export async function updateCategory(id, values) {
+  const { data } = await request(`/categories/${id}`, { method: 'PUT', body: values })
+  return data
+}
+
 export function deleteCategory(id) {
   return request(`/categories/${id}`, { method: 'DELETE' })
 }

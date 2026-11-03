@@ -19,6 +19,7 @@ class UpdateCategoryRequest extends FormRequest
             // ignora a própria categoria na checagem de nome único
             'name' => ['required', 'string', 'max:50', Rule::unique('categories', 'name')->where('user_id', $this->user()->id)->ignore($this->category)],
             'color' => ['required', 'hex_color'],
+            'budget_cents' => ['nullable', 'integer', 'min:1'],
         ];
     }
 }

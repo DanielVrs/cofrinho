@@ -1,8 +1,16 @@
+import { useState } from 'react'
 import CategoryForm from './CategoryForm'
 import { useCategories } from '../../hooks/useCategories'
+import { formatCents } from '../../utils/money'
 
 export default function CategoriesPage() {
-  const { categories, add, remove } = useCategories()
+  const { categories, add, update, remove } = useCategories()
+  const [editing, setEditing] = useState(null)
+
+  async function handleUpdate(values) {
+    await update(editing.id, values)
+    setEditing(null)
+  }
 
   async function handleRemove(category) {
     if (!window.confirm(`Remover "${category.name}"?`)) return
@@ -21,17 +29,27 @@ export default function CategoriesPage() {
       <h2>Categorias</h2>
       {categories.length === 0 && <p className="status">Nenhuma categoria. Crie a primeira acima.</p>}
       <ul className="expense-list">
-        {categories.map((category) => (
-          <li key={category.id} className="expense-item">
-            <span className="expense-color" style={{ background: category.color }} />
-            <div className="expense-info">
-              <strong>{category.name}</strong>
-            </div>
-            <button type="button" onClick={() => handleRemove(category)}>
-              Remover
-            </button>
-          </li>
-        ))}
+        {categories.map((category) =>
+          editing?.id === category.id ? (
+            <li key={category.id} className="expense-item editing">
+              <CategoryForm category={category} onSubmit={handleUpdate} onCancel={() => setEditing(null)} />
+            </li>
+          ) : (
+            <li key={category.id} className="expense-item">
+              <span className="expense-color" style={{ background: category.color }} />
+              <div className="expense-info">
+                <strong>{category.name}</strong>
+                <small>{category.budget_cents ? `Limite mensal: ${formatCents(category.budget_cents)}` : 'Sem limite'}</small>
+              </div>
+              <button type="button" onClick={() => setEditing(category)}>
+                Editar
+              </button>
+              <button type="button" onClick={() => handleRemove(category)}>
+                Remover
+              </button>
+            </li>
+          ),
+        )}
       </ul>
     </>
   )

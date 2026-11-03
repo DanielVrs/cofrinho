@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { createCategory, deleteCategory, listCategories } from '../api/categories'
+import { createCategory, deleteCategory, listCategories, updateCategory } from '../api/categories'
+
+const byName = (a, b) => a.name.localeCompare(b.name)
 
 export function useCategories() {
   const [categories, setCategories] = useState([])
@@ -10,7 +12,12 @@ export function useCategories() {
 
   async function add(values) {
     const created = await createCategory(values)
-    setCategories((current) => [...current, created].sort((a, b) => a.name.localeCompare(b.name)))
+    setCategories((current) => [...current, created].sort(byName))
+  }
+
+  async function update(id, values) {
+    const updated = await updateCategory(id, values)
+    setCategories((current) => current.map((category) => (category.id === id ? updated : category)).sort(byName))
   }
 
   async function remove(id) {
@@ -18,5 +25,5 @@ export function useCategories() {
     setCategories((current) => current.filter((category) => category.id !== id))
   }
 
-  return { categories, add, remove }
+  return { categories, add, update, remove }
 }

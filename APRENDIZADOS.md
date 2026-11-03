@@ -186,3 +186,10 @@ Token no localStorage é lido por qualquer JavaScript da página. Um script mali
 2. Action ExportExpensesCsv monta o arquivo com fputcsv: separador ";" e decimal com vírgula, que o Excel em português abre direto. BOM no início pros acentos
 3. Resposta com Content-Type text/csv e Content-Disposition attachment, o navegador entende como download
 4. No front um link simples não serve porque o token vai no cabeçalho. O client.js ganhou requestBlob e o botão transforma o Blob em download
+
+### Orçamento mensal por categoria
+
+1. Coluna budget_cents opcional em categories, null é sem limite. Escolhi coluna em vez de tabela nova porque o limite é um só por categoria
+2. O resumo devolve budget_cents e over_budget por categoria, calculado na mesma consulta do SUM
+3. No front o formulário de categoria ganhou o campo de limite e passou a servir pra editar também
+4. O Summary mostra gasto / limite e um alerta em vermelho com as categorias que passaram

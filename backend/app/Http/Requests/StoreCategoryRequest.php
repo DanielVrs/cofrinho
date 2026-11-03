@@ -18,6 +18,7 @@ class StoreCategoryRequest extends FormRequest
             // único só entre as categorias deste usuário
             'name' => ['required', 'string', 'max:50', Rule::unique('categories', 'name')->where('user_id', $this->user()->id)],
             'color' => ['required', 'hex_color'],
+            'budget_cents' => ['nullable', 'integer', 'min:1'],
         ];
     }
 }

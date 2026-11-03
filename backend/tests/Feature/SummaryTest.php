@@ -35,3 +35,22 @@ test('resumo exige o mês', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors('month');
 });
+
+test('o resumo avisa quando a categoria passa do limite mensal', function () {
+    $mercado = Category::factory()->for($this->user)->create(['name' => 'Mercado', 'budget_cents' => 3000]);
+    $lazer = Category::factory()->for($this->user)->create(['name' => 'Lazer', 'budget_cents' => 5000]);
+    $semLimite = Category::factory()->for($this->user)->create(['name' => 'Outros']);
+
+    Expense::factory()->create(['category_id' => $mercado->id, 'amount_cents' => 3500, 'spent_on' => '2026-11-10']);
+    Expense::factory()->create(['category_id' => $lazer->id, 'amount_cents' => 1000, 'spent_on' => '2026-11-10']);
+    Expense::factory()->create(['category_id' => $semLimite->id, 'amount_cents' => 100, 'spent_on' => '2026-11-10']);
+
+    $this->getJson('/api/summary?month=2026-11')
+        ->assertOk()
+        ->assertJsonPath('data.by_category.0.name', 'Mercado')
+        ->assertJsonPath('data.by_category.0.budget_cents', 3000)
+        ->assertJsonPath('data.by_category.0.over_budget', true)
+        ->assertJsonPath('data.by_category.1.over_budget', false)
+        ->assertJsonPath('data.by_category.2.budget_cents', null)
+        ->assertJsonPath('data.by_category.2.over_budget', false);
+});

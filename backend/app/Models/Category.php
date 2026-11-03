@@ -11,7 +11,12 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'color', 'user_id'];
+    protected $fillable = ['name', 'color', 'budget_cents', 'user_id'];
+
+    protected function casts(): array
+    {
+        return ['budget_cents' => 'integer'];
+    }
 
     // lado "1" da relação: uma categoria tem vários lançamentos
     public function expenses(): HasMany

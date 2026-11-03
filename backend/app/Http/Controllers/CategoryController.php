@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\DeleteCategory;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
@@ -36,9 +37,9 @@ class CategoryController extends Controller
         return new CategoryResource($category);
     }
 
-    public function destroy(Category $category)
+    public function destroy(Category $category, DeleteCategory $deleteCategory)
     {
-        $category->delete();
+        $deleteCategory->handle($category);
 
         return response()->noContent();
     }

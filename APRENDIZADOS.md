@@ -62,3 +62,18 @@ Porque a migration é código e vai pro Git. Quem clonar o projeto roda migrate 
 
 Pergunta: o que acontece desde a chegada de um POST até a resposta 201?
 Entra pelo index.php, o bootstrap monta a app e acha a rota. Antes do controller roda o Form Request, se falhar volta 422. Passou, o store faz o Category::create, o Resource monta o JSON e volta 201.
+
+## Etapa 5
+
+1. Criei o model Expense com migration, a tabela tem category_id como chave estrangeira
+2. No Expense coloquei belongsTo(Category) e no Category hasMany(Expense), os dois lados da relação
+3. Cast de spent_on para date, assim vem como objeto de data e não string
+4. CRUD de /api/expenses no mesmo padrão da etapa 4: Form Request, Resource, apiResource
+5. A listagem usa with('category') pra trazer a categoria junto
+6. Regra de negócio: categoria com lançamento não apaga. Ficou numa Action (DeleteCategory) que lança uma exceção, e o bootstrap transforma em 409
+
+Pergunta: por que centavos em inteiro em vez de float?
+Float arredonda mal, 0.1 + 0.2 não dá 0.3 exato. Com inteiro a conta é sempre exata.
+
+Pergunta: o que é o problema N+1?
+Uma consulta pra buscar a lista e mais uma por item pra buscar a relação. Com 100 lançamentos são 101 consultas. Testei: com with foram 2 consultas, sem with foram 6 pra 5 lançamentos.

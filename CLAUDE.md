@@ -9,8 +9,9 @@ ficam em `APRENDIZADOS.md`.
 
 - O usuário não escreve código. Claude escreve tudo e, a cada etapa ou quando
   for necessário, explica o que foi feito de forma curta, objetiva e simples.
-- Um commit por etapa, no mínimo. Antes de cada commit, atualizar
-  `APRENDIZADOS.md` com a resposta da etapa e pedir permissão.
+- Um commit por etapa, no mínimo. O `APRENDIZADOS.md` é escrito pelo usuário,
+  com as próprias palavras; Claude só explica os conceitos e revisa se pedido.
+  Antes de cada commit, pedir permissão.
 - Conferir a documentação oficial do Laravel 13 e do React 19 quando houver
   dúvida de versão.
 

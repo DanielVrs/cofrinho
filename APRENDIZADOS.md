@@ -38,3 +38,15 @@ Com colchetes estou lendo uma chave de array, com a seta estou lendo uma proprie
 
 Pergunta: quem colocou o prefixo /api na rota?
 O bootstrap/app.php. O install:api registrou o routes/api.php lá no parâmetro api, e tudo que está nesse arquivo ganha o prefixo /api automaticamente.
+
+## Etapa 3
+
+1. Rodei php artisan make:model Category -ms, gerou o model, a migration e o seeder
+2. Na migration coloquei name (único) e color
+3. No model só o $fillable com name e color, para poder criar com Category::create()
+4. No CategorySeeder coloquei 5 categorias com firstOrCreate, assim o seed roda de novo sem duplicar
+5. Chamei o CategorySeeder no DatabaseSeeder e rodei php artisan migrate --seed
+6. No Tinker: Category::count() deu 5, criei uma categoria, apaguei, voltou pra 5
+
+Pergunta: por que usar migrations em vez de criar as tabelas direto no banco?
+Porque a migration é código e vai pro Git. Quem clonar o projeto roda migrate e tem o mesmo banco que eu. Criando direto no banco fica só na minha máquina e sem histórico de mudanças.

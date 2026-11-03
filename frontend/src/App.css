@@ -195,3 +195,94 @@ button:disabled {
   margin-top: 12px;
   color: #6b7280;
 }
+
+.auth {
+  max-width: 360px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.auth-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.auth-form input {
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font: inherit;
+}
+
+button.link {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+.user-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #6b7280;
+}
+
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.tabs button.active {
+  background: #1f2937;
+  color: #fff;
+  border-color: #1f2937;
+}
+
+.category-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.category-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.category-form label:first-child {
+  flex: 1;
+}
+
+.category-form input {
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.category-form input[type='color'] {
+  width: 48px;
+  height: 38px;
+  padding: 2px;
+}

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\RegisterUser;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
@@ -13,10 +14,10 @@ use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
-    public function register(RegisterRequest $request)
+    public function register(RegisterRequest $request, RegisterUser $registerUser)
     {
-        // o cast 'hashed' do model guarda o hash da senha, nunca o texto
-        $user = User::create($request->validated());
+        // cria o usuário (senha vira hash pelo cast do model) e as categorias padrão
+        $user = $registerUser->handle($request->validated());
 
         return $this->respondWithToken($user, Response::HTTP_CREATED);
     }

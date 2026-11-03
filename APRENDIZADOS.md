@@ -164,3 +164,16 @@ Erro que apareceu: no update, a validação rodava antes da autorização e dava
 
 Pergunta: qual a diferença entre autenticação e autorização? Exemplo do Cofrinho.
 Autenticação é saber quem está chamando: o token do Sanctum no cabeçalho, sem ele a API responde 401. Autorização é saber se essa pessoa pode mexer naquele dado: a Policy. Usuário A, logado, tenta apagar a categoria do B e recebe 403.
+
+## Etapa 13
+
+1. Criei o session.js, que guarda o token e o usuário no localStorage. Por isso a sessão sobrevive ao recarregar
+2. O client.js põe Authorization: Bearer em toda chamada se tiver token. Se a API responder 401, avisa a sessão e volta pro login
+3. AuthProvider é o estado global: começa com o que está no localStorage, confere o token na API ao abrir, e expõe login, register e logout pelo hook useAuth
+4. Telas de login e cadastro usam o mesmo AuthForm, com erros 422 por campo. Botão Sair chama o logout da API e limpa a sessão
+5. Testei: recarregar mantém logado, sair volta pro login, duas contas veem dados diferentes
+
+Extras que faltavam: tela de categorias (criar e remover) com abas no App, e a Action RegisterUser que cria as 5 categorias padrão na conta nova. 36 testes passando.
+
+Pergunta: o Sanctum recomenda cookies pra SPA própria, aqui usamos token. Quais os riscos e o que mudaria num produto real?
+Token no localStorage é lido por qualquer JavaScript da página. Um script malicioso (XSS ou dependência comprometida) rouba o token e usa a conta de fora. O token também não expira sozinho. Num produto real a SPA usaria o modo cookie do Sanctum: sessão num cookie HttpOnly, que o JavaScript não lê, com proteção CSRF. Token ficaria pra app mobile e integrações, com expiração e escopo.

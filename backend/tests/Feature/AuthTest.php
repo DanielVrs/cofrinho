@@ -21,6 +21,19 @@ test('registra um usuário e devolve o token', function () {
     $this->assertDatabaseHas('users', ['email' => 'ana@example.com']);
 });
 
+test('conta nova já nasce com as categorias padrão', function () {
+    $token = $this->postJson('/api/register', [
+        'name' => 'Ana',
+        'email' => 'ana@example.com',
+        'password' => 'senha-forte',
+        'password_confirmation' => 'senha-forte',
+    ])->json('token');
+
+    $this->withToken($token)->getJson('/api/categories')
+        ->assertOk()
+        ->assertJsonCount(5, 'data');
+});
+
 test('não registra com e-mail repetido', function () {
     User::factory()->create(['email' => 'ana@example.com']);
 

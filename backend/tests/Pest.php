@@ -16,6 +16,8 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
+    // simula o frontend: a Origin faz a requisição ser "stateful" (sessão + cookie), como no navegador
+    ->beforeEach(fn () => $this->withHeader('Origin', 'http://localhost:5173'))
     ->in('Feature');
 
 /*

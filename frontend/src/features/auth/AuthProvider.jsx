@@ -1,37 +1,36 @@
 import { useEffect, useState } from 'react'
 import { AuthContext } from './context'
 import * as authApi from '../../api/auth'
-import { clearSession, getStoredUser, getToken, onUnauthorized, saveSession } from '../../api/session'
-
+import { clearUser, getStoredUser, onUnauthorized, saveUser } from '../../api/session'
 
 export function AuthProvider({ children }) {
-  // começa com o que está no localStorage, por isso a sessão sobrevive ao recarregar
+  // começa com o que está no localStorage, por isso a tela já abre logada ao recarregar
   const [user, setUser] = useState(getStoredUser)
 
   function endSession() {
-    clearSession()
+    clearUser()
     setUser(null)
+  }
+
+  function startSession(loggedUser) {
+    saveUser(loggedUser)
+    setUser(loggedUser)
   }
 
   useEffect(() => {
     // qualquer 401 vindo da API derruba a sessão e volta para o login
     onUnauthorized(endSession)
 
-    // confere se o token guardado ainda vale; se não, a API responde 401
-    if (getToken()) authApi.me().then(setUser).catch(() => {})
+    // confere se o cookie de sessão ainda vale; se não, a API responde 401
+    if (getStoredUser()) authApi.me().then(startSession).catch(() => {})
   }, [])
-
-  async function startSession(response) {
-    saveSession(response.token, response.user)
-    setUser(response.user)
-  }
 
   const value = {
     user,
     login: async (values) => startSession(await authApi.login(values)),
     register: async (values) => startSession(await authApi.register(values)),
     logout: async () => {
-      await authApi.logout().catch(() => {}) // se o token já não vale, tudo bem
+      await authApi.logout().catch(() => {}) // se a sessão já caiu, tudo bem
       endSession()
     },
   }

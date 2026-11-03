@@ -1,9 +1,8 @@
 <?php
 
 use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 
-test('registra um usuário e devolve o token', function () {
+test('registra um usuário e abre a sessão', function () {
     $response = $this->postJson('/api/register', [
         'name' => 'Ana',
         'email' => 'ana@example.com',
@@ -11,27 +10,24 @@ test('registra um usuário e devolve o token', function () {
         'password_confirmation' => 'senha-forte',
     ]);
 
-    $response->assertCreated()
-        ->assertJsonPath('user.email', 'ana@example.com')
-        ->assertJsonStructure(['token']);
+    $response->assertCreated()->assertJsonPath('data.email', 'ana@example.com');
 
     // a senha nunca aparece na resposta
-    expect($response->json('user'))->not->toHaveKey('password');
+    expect($response->json('data'))->not->toHaveKey('password');
 
+    $this->assertAuthenticated();
     $this->assertDatabaseHas('users', ['email' => 'ana@example.com']);
 });
 
 test('conta nova já nasce com as categorias padrão', function () {
-    $token = $this->postJson('/api/register', [
+    $this->postJson('/api/register', [
         'name' => 'Ana',
         'email' => 'ana@example.com',
         'password' => 'senha-forte',
         'password_confirmation' => 'senha-forte',
-    ])->json('token');
+    ])->assertCreated();
 
-    $this->withToken($token)->getJson('/api/categories')
-        ->assertOk()
-        ->assertJsonCount(5, 'data');
+    $this->getJson('/api/categories')->assertOk()->assertJsonCount(5, 'data');
 });
 
 test('não registra com e-mail repetido', function () {
@@ -48,12 +44,13 @@ test('não registra com e-mail repetido', function () {
 });
 
 test('faz login com senha certa', function () {
-    User::factory()->create(['email' => 'ana@example.com', 'password' => 'senha-forte']);
+    $user = User::factory()->create(['email' => 'ana@example.com', 'password' => 'senha-forte']);
 
     $this->postJson('/api/login', ['email' => 'ana@example.com', 'password' => 'senha-forte'])
         ->assertOk()
-        ->assertJsonPath('user.email', 'ana@example.com')
-        ->assertJsonStructure(['token']);
+        ->assertJsonPath('data.email', 'ana@example.com');
+
+    $this->assertAuthenticatedAs($user);
 });
 
 test('não faz login com senha errada', function () {
@@ -62,37 +59,39 @@ test('não faz login com senha errada', function () {
     $this->postJson('/api/login', ['email' => 'ana@example.com', 'password' => 'outra'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('email');
+
+    $this->assertGuest();
 });
 
-test('o token devolvido no login dá acesso às rotas protegidas', function () {
+test('a sessão aberta no login dá acesso às rotas protegidas', function () {
     User::factory()->create(['email' => 'ana@example.com', 'password' => 'senha-forte']);
 
-    $token = $this->postJson('/api/login', ['email' => 'ana@example.com', 'password' => 'senha-forte'])
-        ->json('token');
+    $this->postJson('/api/login', ['email' => 'ana@example.com', 'password' => 'senha-forte'])->assertOk();
 
-    $this->withToken($token)->getJson('/api/user')
-        ->assertOk()
-        ->assertJsonPath('data.email', 'ana@example.com');
+    $this->getJson('/api/user')->assertOk()->assertJsonPath('data.email', 'ana@example.com');
 });
 
-test('responde 401 sem token', function () {
+test('responde 401 sem sessão', function () {
     $this->getJson('/api/categories')->assertUnauthorized();
     $this->getJson('/api/expenses')->assertUnauthorized();
     $this->getJson('/api/summary?month=2026-11')->assertUnauthorized();
     $this->getJson('/api/user')->assertUnauthorized();
 });
 
-test('faz logout e o token para de valer', function () {
-    $user = User::factory()->create();
-    $token = $user->createToken('teste')->plainTextToken;
+test('faz logout e a sessão deixa de valer', function () {
+    $this->actingAs(User::factory()->create());
 
-    $this->withToken($token)->postJson('/api/logout')->assertNoContent();
+    $this->postJson('/api/logout')->assertNoContent();
 
-    $this->assertDatabaseCount('personal_access_tokens', 0);
+    $this->assertGuest('web');
+
+    // no teste os guards ficam em memória entre requisições; esquecê-los simula uma requisição nova
+    $this->app['auth']->forgetGuards();
+    $this->getJson('/api/user')->assertUnauthorized();
 });
 
 test('a senha fica guardada como hash', function () {
-    Sanctum::actingAs(User::factory()->create(['password' => 'senha-forte']));
+    User::factory()->create(['password' => 'senha-forte']);
 
     $user = User::first();
 

@@ -6,10 +6,9 @@ use App\Actions\RegisterUser;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
@@ -19,27 +18,34 @@ class AuthController extends Controller
         // cria o usuário (senha vira hash pelo cast do model) e as categorias padrão
         $user = $registerUser->handle($request->validated());
 
-        return $this->respondWithToken($user, Response::HTTP_CREATED);
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return (new UserResource($user))->response()->setStatusCode(Response::HTTP_CREATED);
     }
 
     public function login(LoginRequest $request)
     {
-        $user = User::where('email', $request->validated('email'))->first();
-
-        // Hash::check compara a senha digitada com o hash guardado
-        if (! $user || ! Hash::check($request->validated('password'), $user->password)) {
+        // Auth::attempt confere e-mail e senha (Hash::check por baixo) e abre a sessão
+        if (! Auth::attempt($request->validated())) {
             throw ValidationException::withMessages([
                 'email' => ['E-mail ou senha inválidos.'],
             ]);
         }
 
-        return $this->respondWithToken($user);
+        // troca o id da sessão depois do login (evita session fixation)
+        $request->session()->regenerate();
+
+        return new UserResource($request->user());
     }
 
     public function logout(Request $request)
     {
-        // apaga só o token usado nesta chamada
-        $request->user()->currentAccessToken()->delete();
+        Auth::guard('web')->logout();
+
+        // apaga a sessão e gera um token CSRF novo
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return response()->noContent();
     }
@@ -47,13 +53,5 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         return new UserResource($request->user());
-    }
-
-    private function respondWithToken(User $user, int $status = Response::HTTP_OK)
-    {
-        return response()->json([
-            'user' => new UserResource($user),
-            'token' => $user->createToken('cofrinho')->plainTextToken,
-        ], $status);
     }
 }

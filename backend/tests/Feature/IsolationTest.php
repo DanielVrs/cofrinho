@@ -3,7 +3,6 @@
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 
 // usuário A autenticado; usuário B com dados próprios
 beforeEach(function () {
@@ -13,7 +12,7 @@ beforeEach(function () {
     $this->categoryB = Category::factory()->for($this->userB)->create();
     $this->expenseB = Expense::factory()->create(['category_id' => $this->categoryB->id]);
 
-    Sanctum::actingAs($this->userA);
+    $this->actingAs($this->userA);
 });
 
 test('a listagem só mostra as categorias do próprio usuário', function () {

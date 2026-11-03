@@ -3,11 +3,10 @@
 use App\Models\Category;
 use App\Models\Expense;
 use App\Models\User;
-use Laravel\Sanctum\Sanctum;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
-    Sanctum::actingAs($this->user);
+    $this->actingAs($this->user);
 });
 
 // atalho: um lançamento numa categoria do usuário autenticado

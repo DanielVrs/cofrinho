@@ -33,6 +33,11 @@ php artisan serve
 A API fica em `http://localhost:8000`. O seed cria uma conta de demonstração:
 `demo@cofrinho.test` com senha `password`.
 
+A autenticação é por cookie de sessão (modo SPA do Sanctum). O `.env` do backend
+precisa saber o endereço do frontend em `FRONTEND_URL` e `SANCTUM_STATEFUL_DOMAINS`
+(já vêm no `.env.example` apontando para `localhost:5173`). Abra o app sempre por
+`http://localhost:5173`, não por `127.0.0.1`, senão o cookie não vale.
+
 Frontend, em outro terminal:
 
 ```sh

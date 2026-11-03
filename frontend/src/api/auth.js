@@ -1,11 +1,13 @@
 import { request } from './client'
 
-export function register(values) {
-  return request('/register', { method: 'POST', body: values }) // { user, token }
+export async function register(values) {
+  const { data } = await request('/register', { method: 'POST', body: values })
+  return data // usuário; a sessão fica no cookie
 }
 
-export function login(values) {
-  return request('/login', { method: 'POST', body: values }) // { user, token }
+export async function login(values) {
+  const { data } = await request('/login', { method: 'POST', body: values })
+  return data
 }
 
 export function logout() {

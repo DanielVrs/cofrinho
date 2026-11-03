@@ -1,23 +1,17 @@
-// guarda o token e o usuário no localStorage, para a sessão sobreviver ao recarregar
-const TOKEN_KEY = 'cofrinho.token'
+// a sessão em si fica num cookie HttpOnly que o JavaScript não lê;
+// aqui guardamos só o usuário, para a tela abrir logada sem esperar a API
 const USER_KEY = 'cofrinho.user'
-
-export function getToken() {
-  return localStorage.getItem(TOKEN_KEY)
-}
 
 export function getStoredUser() {
   const raw = localStorage.getItem(USER_KEY)
   return raw ? JSON.parse(raw) : null
 }
 
-export function saveSession(token, user) {
-  localStorage.setItem(TOKEN_KEY, token)
+export function saveUser(user) {
   localStorage.setItem(USER_KEY, JSON.stringify(user))
 }
 
-export function clearSession() {
-  localStorage.removeItem(TOKEN_KEY)
+export function clearUser() {
   localStorage.removeItem(USER_KEY)
 }
 

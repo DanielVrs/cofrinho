@@ -201,3 +201,12 @@ Token no localStorage é lido por qualquer JavaScript da página. Um script mali
 3. RequireAuth: sem usuário faz Navigate pra /login. GuestOnly: logado em /login vai pra /
 4. Layout tem o cabeçalho e o menu com NavLink, que marca a rota ativa sozinho, e o Outlet onde a página filha entra
 5. Agora a URL muda, o botão voltar funciona e dá pra abrir /categories direto
+
+### Cookies do Sanctum no lugar do token
+
+1. No backend: statefulApi() no bootstrap, CORS com a origem exata do front e supports_credentials, e SANCTUM_STATEFUL_DOMAINS=localhost:5173 no .env
+2. Login virou Auth::attempt + regenerate da sessão. Logout invalida a sessão. Nada de token na resposta
+3. A sessão fica num cookie HttpOnly, que o JavaScript não lê. O que o JS lê é o cookie XSRF-TOKEN, e devolve ele no cabeçalho X-XSRF-TOKEN em POST, PUT e DELETE. Sem isso dá 419
+4. No front: fetch com credentials include, GET /sanctum/csrf-cookie antes do primeiro POST, e se vier 419 pega um token novo e tenta de novo
+5. Nos testes troquei Sanctum::actingAs por actingAs e coloquei um cabeçalho Origin padrão, senão a requisição não é "stateful" e não tem sessão. O teste de logout precisou de forgetGuards porque no teste os guards ficam em memória entre requisições
+6. Validei com curl: login 200, rota protegida 200, POST sem CSRF 419, logout 204, depois 401

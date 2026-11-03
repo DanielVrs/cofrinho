@@ -1,4 +1,4 @@
-import { request } from './client'
+import { request, requestBlob } from './client'
 
 // monta ?month=2026-11&category_id=2&page=1 só com o que foi informado
 export function listExpenses({ month, categoryId, page } = {}) {
@@ -23,4 +23,9 @@ export async function updateExpense(id, values) {
 
 export function deleteExpense(id) {
   return request(`/expenses/${id}`, { method: 'DELETE' })
+}
+
+// CSV do mês, como Blob, para o navegador baixar
+export function exportExpenses(month) {
+  return requestBlob(`/expenses/export?month=${month}`)
 }

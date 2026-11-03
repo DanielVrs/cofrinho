@@ -8,6 +8,8 @@ import { useCategories } from '../../hooks/useCategories'
 import { useExpenses } from '../../hooks/useExpenses'
 import { useSummary } from '../../hooks/useSummary'
 import { currentMonth } from '../../utils/date'
+import { downloadBlob } from '../../utils/download'
+import { exportExpenses } from '../../api/expenses'
 
 // a tela: junta os hooks e distribui para os componentes
 export default function ExpensesPage() {
@@ -34,6 +36,14 @@ export default function ExpensesPage() {
     reloadSummary()
   }
 
+  async function handleExport() {
+    try {
+      downloadBlob(await exportExpenses(filters.month), `lancamentos-${filters.month}.csv`)
+    } catch (err) {
+      window.alert(err.message)
+    }
+  }
+
   async function handleRemove(expense) {
     if (!window.confirm(`Remover "${expense.description}"?`)) return
     try {
@@ -58,7 +68,12 @@ export default function ExpensesPage() {
       />
       <Summary summary={summary} categories={categories} />
 
-      <h2>Lançamentos</h2>
+      <div className="section-head">
+        <h2>Lançamentos</h2>
+        <button type="button" onClick={handleExport}>
+          Exportar CSV
+        </button>
+      </div>
       <ExpenseList
         expenses={expenses}
         categories={categories}

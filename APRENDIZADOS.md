@@ -177,3 +177,12 @@ Extras que faltavam: tela de categorias (criar e remover) com abas no App, e a A
 
 Pergunta: o Sanctum recomenda cookies pra SPA própria, aqui usamos token. Quais os riscos e o que mudaria num produto real?
 Token no localStorage é lido por qualquer JavaScript da página. Um script malicioso (XSS ou dependência comprometida) rouba o token e usa a conta de fora. O token também não expira sozinho. Num produto real a SPA usaria o modo cookie do Sanctum: sessão num cookie HttpOnly, que o JavaScript não lê, com proteção CSRF. Token ficaria pra app mobile e integrações, com expiração e escopo.
+
+## Desafios opcionais
+
+### CSV do mês
+
+1. Rota GET /api/expenses/export?month=2026-11, declarada antes do apiResource senão "export" vira id de lançamento
+2. Action ExportExpensesCsv monta o arquivo com fputcsv: separador ";" e decimal com vírgula, que o Excel em português abre direto. BOM no início pros acentos
+3. Resposta com Content-Type text/csv e Content-Disposition attachment, o navegador entende como download
+4. No front um link simples não serve porque o token vai no cabeçalho. O client.js ganhou requestBlob e o botão transforma o Blob em download

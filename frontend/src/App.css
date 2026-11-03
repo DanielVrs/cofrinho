@@ -286,3 +286,13 @@ button.link {
   height: 38px;
   padding: 2px;
 }
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-head h2 {
+  margin-right: 12px;
+}

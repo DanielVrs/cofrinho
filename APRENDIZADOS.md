@@ -27,3 +27,14 @@ Porque tem senha e chave dentro, e cada máquina usa valores diferentes. O que s
 Pergunta: qual a diferença entre $gasto['valor'] e $gasto->valor?
 Com colchetes estou lendo uma chave de array, com a seta estou lendo uma propriedade de um objeto. No array não tem garantia nenhuma, posso errar o nome da chave e ele só devolve null. No objeto a classe já define quais campos existem, o tipo de cada um e os métodos.
 
+
+## Etapa 2
+
+1. Rodei php artisan install:api, que criou o routes/api.php e instalou o Sanctum (vai servir para o login mais pra frente)
+2. Rodei a migration que o Sanctum trouxe
+3. Criei a rota GET /ping no routes/api.php devolvendo {"status": "ok"}
+4. Conferi com php artisan route:list, a rota aparece como api/ping
+5. Subi o server e chamei /api/ping, voltou 200 com o JSON
+
+Pergunta: quem colocou o prefixo /api na rota?
+O bootstrap/app.php. O install:api registrou o routes/api.php lá no parâmetro api, e tudo que está nesse arquivo ganha o prefixo /api automaticamente.

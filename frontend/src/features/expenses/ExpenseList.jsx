@@ -1,24 +1,21 @@
-import { useState } from 'react'
 import ExpenseItem from './ExpenseItem'
-import { mockExpenses } from './mockExpenses'
+import { useExpenses } from '../../hooks/useExpenses'
 
 export default function ExpenseList() {
-  // estado: a lista que aparece na tela. Mudar via setExpenses redesenha o componente.
-  const [expenses, setExpenses] = useState(mockExpenses)
+  const { expenses, setExpenses, loading, error } = useExpenses()
 
   function handleRemove(id) {
-    // nunca altera o array atual; cria um novo sem o item removido
     setExpenses(expenses.filter((expense) => expense.id !== id))
   }
 
-  if (expenses.length === 0) {
-    return <p className="empty">Nenhum lançamento.</p>
-  }
+  // três estados antes da lista: carregando, erro e vazia
+  if (loading) return <p className="status">Carregando...</p>
+  if (error) return <p className="status error">{error}</p>
+  if (expenses.length === 0) return <p className="status">Nenhum lançamento.</p>
 
   return (
     <ul className="expense-list">
       {expenses.map((expense) => (
-        // key: o React usa para saber qual <li> é qual quando a lista muda
         <ExpenseItem key={expense.id} expense={expense} onRemove={handleRemove} />
       ))}
     </ul>

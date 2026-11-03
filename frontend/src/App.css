@@ -67,6 +67,10 @@ button:hover {
   background: #f3f4f6;
 }
 
-.empty {
+.status {
   color: #6b7280;
+}
+
+.status.error {
+  color: #b91c1c;
 }

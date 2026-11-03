@@ -113,3 +113,15 @@ Roda as migrations num banco limpo e desfaz tudo no fim de cada teste. Sem ele u
 
 Pergunta: por que alterar uma variável comum não atualiza a tela, mas chamar a função do useState sim?
 O React não fica vigiando variável. Ele só redesenha o componente quando eu chamo a função do useState, que avisa que o estado mudou. Mudando uma variável comum o valor muda na memória mas ninguém avisa o React.
+
+## Etapa 9
+
+1. Criei o frontend/.env com VITE_API_URL=http://localhost:8000/api, e o .env.example que vai pro Git
+2. Criei o src/api/client.js com a única função que faz fetch. Monta a URL, manda JSON e transforma erro em exceção
+3. Criei o hook useExpenses, que busca os dados num useEffect quando o componente aparece
+4. A lista agora mostra três estados antes dos dados: carregando, erro e vazia
+5. Testei: com o backend ligado aparecem os lançamentos do banco, desligado aparece a mensagem de erro
+6. Não deu erro de CORS porque o Laravel já libera api/* pra qualquer origem por padrão
+
+Pergunta: o que é CORS, e por que funciona no Postman mas falha no navegador?
+CORS é uma regra do navegador. A página em localhost:5173 chamando localhost:8000 é outra origem, e o navegador só entrega a resposta se o servidor mandar o cabeçalho Access-Control-Allow-Origin liberando. Postman e curl não são navegador, não aplicam essa regra.

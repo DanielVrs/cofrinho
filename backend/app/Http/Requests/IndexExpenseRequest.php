@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class IndexExpenseRequest extends FormRequest
 {
@@ -16,7 +17,7 @@ class IndexExpenseRequest extends FormRequest
     {
         return [
             'month' => ['nullable', 'date_format:Y-m'],
-            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'category_id' => ['nullable', 'integer', Rule::exists('categories', 'id')->where('user_id', $this->user()->id)],
         ];
     }
 }

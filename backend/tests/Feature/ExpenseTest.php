@@ -2,9 +2,24 @@
 
 use App\Models\Category;
 use App\Models\Expense;
+use App\Models\User;
+use Laravel\Sanctum\Sanctum;
+
+beforeEach(function () {
+    $this->user = User::factory()->create();
+    Sanctum::actingAs($this->user);
+});
+
+// atalho: um lançamento numa categoria do usuário autenticado
+function ownExpense(array $attributes = []): Expense
+{
+    $category = Category::factory()->for(test()->user)->create();
+
+    return Expense::factory()->create(['category_id' => $category->id, ...$attributes]);
+}
 
 test('cria um lançamento', function () {
-    $category = Category::factory()->create();
+    $category = Category::factory()->for($this->user)->create();
 
     $this->postJson('/api/expenses', [
         'description' => 'Almoço',
@@ -29,7 +44,7 @@ test('não cria lançamento com categoria inexistente', function () {
 });
 
 test('não cria lançamento com valor zero', function () {
-    $category = Category::factory()->create();
+    $category = Category::factory()->for($this->user)->create();
 
     $this->postJson('/api/expenses', [
         'description' => 'Almoço',
@@ -42,8 +57,8 @@ test('não cria lançamento com valor zero', function () {
 });
 
 test('filtra lançamentos por mês', function () {
-    Expense::factory()->create(['description' => 'De novembro', 'spent_on' => '2026-11-10']);
-    Expense::factory()->create(['description' => 'De outubro', 'spent_on' => '2026-10-10']);
+    ownExpense(['description' => 'De novembro', 'spent_on' => '2026-11-10']);
+    ownExpense(['description' => 'De outubro', 'spent_on' => '2026-10-10']);
 
     $this->getJson('/api/expenses?month=2026-11')
         ->assertOk()
@@ -52,8 +67,8 @@ test('filtra lançamentos por mês', function () {
 });
 
 test('filtra lançamentos por categoria', function () {
-    $mercado = Category::factory()->create();
-    $lazer = Category::factory()->create();
+    $mercado = Category::factory()->for($this->user)->create();
+    $lazer = Category::factory()->for($this->user)->create();
     Expense::factory()->count(2)->create(['category_id' => $mercado->id]);
     Expense::factory()->create(['category_id' => $lazer->id]);
 
@@ -69,7 +84,7 @@ test('rejeita mês inválido', function () {
 });
 
 test('pagina a listagem com 15 por página', function () {
-    Expense::factory()->count(20)->create();
+    Expense::factory()->count(20)->create(['category_id' => Category::factory()->for($this->user)->create()->id]);
 
     $this->getJson('/api/expenses')
         ->assertOk()
@@ -78,7 +93,7 @@ test('pagina a listagem com 15 por página', function () {
 });
 
 test('remove um lançamento', function () {
-    $expense = Expense::factory()->create();
+    $expense = ownExpense();
 
     $this->deleteJson("/api/expenses/{$expense->id}")->assertNoContent();
 

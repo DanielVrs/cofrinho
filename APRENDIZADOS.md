@@ -149,3 +149,18 @@ O frontend roda no navegador da pessoa, ela controla tudo ali. Dá pra pular a v
 
 Pergunta: quando vale a pena extrair um hook próprio?
 Quando a lógica tem estado e efeito próprios e não é desenho de tela, ou quando dois componentes iam repetir o mesmo código. Buscar lançamentos tem lista, erro, carregando e useEffect. No hook o componente só pede os dados e desenha.
+
+## Etapa 12
+
+1. Adicionei o HasApiTokens no User e criei register, login, logout e /user no AuthController. A senha vira hash pelo cast do model e nunca sai no JSON
+2. Migration nova adiciona user_id em categories e expenses, e troca o nome único global por único por usuário
+3. Rotas protegidas num grupo com auth:sanctum. Sem token responde 401
+4. Policies de Category e Expense: só o dono pode ver, editar e apagar, senão 403. Listar e criar partem de $request->user()->categories(), então já ficam presos ao dono
+5. Validação: nome único só entre as categorias do usuário, e category_id tem que ser uma categoria dele
+6. Atualizei factories, seeders (conta demo) e testes. 35 testes, 15 novos, incluindo o IsolationTest que prova que A não mexe nos dados de B
+7. Tive que recriar o banco de dev com migrate:fresh --seed, porque os dados antigos não tinham dono
+
+Erro que apareceu: no update, a validação rodava antes da autorização e dava 422 em vez de 403. Resolvi colocando a checagem no authorize() do Form Request, que roda antes das regras.
+
+Pergunta: qual a diferença entre autenticação e autorização? Exemplo do Cofrinho.
+Autenticação é saber quem está chamando: o token do Sanctum no cabeçalho, sem ele a API responde 401. Autorização é saber se essa pessoa pode mexer naquele dado: a Policy. Usuário A, logado, tenta apagar a categoria do B e recebe 403.

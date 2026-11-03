@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateExpenseRequest;
 use App\Http\Resources\ExpenseResource;
 use App\Models\Expense;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Gate;
 
 class ExpenseController extends Controller
 {
@@ -16,9 +17,11 @@ class ExpenseController extends Controller
         $month = $request->validated('month');
         $categoryId = $request->validated('category_id');
 
+        // parte da relação do usuário: só os lançamentos dele
         // with('category'): carrega todas as categorias em uma consulta só (evita o N+1)
         // when(): só aplica o filtro se o parâmetro veio na query string
-        $expenses = Expense::with('category')
+        $expenses = $request->user()->expenses()
+            ->with('category')
             ->when($month, fn ($query) => $query->forMonth($month))
             ->when($categoryId, fn ($query) => $query->forCategory((int) $categoryId))
             ->orderByDesc('spent_on')
@@ -30,7 +33,7 @@ class ExpenseController extends Controller
 
     public function store(StoreExpenseRequest $request)
     {
-        $expense = Expense::create($request->validated())->load('category');
+        $expense = $request->user()->expenses()->create($request->validated())->load('category');
 
         return (new ExpenseResource($expense))
             ->response()
@@ -39,11 +42,14 @@ class ExpenseController extends Controller
 
     public function show(Expense $expense)
     {
+        Gate::authorize('view', $expense);
+
         return new ExpenseResource($expense->load('category'));
     }
 
     public function update(UpdateExpenseRequest $request, Expense $expense)
     {
+        // a autorização de update está no UpdateExpenseRequest::authorize()
         $expense->update($request->validated());
 
         return new ExpenseResource($expense->load('category'));
@@ -51,6 +57,8 @@ class ExpenseController extends Controller
 
     public function destroy(Expense $expense)
     {
+        Gate::authorize('delete', $expense);
+
         $expense->delete();
 
         return response()->noContent();

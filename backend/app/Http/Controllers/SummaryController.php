@@ -10,6 +10,6 @@ class SummaryController extends Controller
 {
     public function __invoke(SummaryRequest $request, SummarizeMonth $summarizeMonth)
     {
-        return new SummaryResource($summarizeMonth->handle($request->validated('month')));
+        return new SummaryResource($summarizeMonth->handle($request->user(), $request->validated('month')));
     }
 }

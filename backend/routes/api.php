@@ -1,17 +1,23 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\SummaryController;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/ping', fn () => response()->json(['status' => 'ok']));
 
-Route::apiResource('categories', CategoryController::class);
-Route::apiResource('expenses', ExpenseController::class);
-Route::get('/summary', SummaryController::class);
+// rotas públicas: sem token
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
 
-Route::get('/user', function (Request $request) {
-    return $request->user();
-})->middleware('auth:sanctum');
+// rotas protegidas: sem token válido, 401
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', [AuthController::class, 'me']);
+
+    Route::apiResource('categories', CategoryController::class);
+    Route::apiResource('expenses', ExpenseController::class);
+    Route::get('/summary', SummaryController::class);
+});

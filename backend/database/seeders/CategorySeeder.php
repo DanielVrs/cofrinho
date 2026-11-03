@@ -2,13 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\Category;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class CategorySeeder extends Seeder
 {
     public function run(): void
     {
+        $user = User::where('email', 'demo@cofrinho.test')->firstOrFail();
+
         $categorias = [
             ['name' => 'Mercado',     'color' => '#22c55e'],
             ['name' => 'Transporte',  'color' => '#3b82f6'],
@@ -19,7 +21,7 @@ class CategorySeeder extends Seeder
 
         foreach ($categorias as $categoria) {
             // firstOrCreate: só insere se ainda não existir, então dá para rodar o seed mais de uma vez
-            Category::firstOrCreate(['name' => $categoria['name']], $categoria);
+            $user->categories()->firstOrCreate(['name' => $categoria['name']], $categoria);
         }
     }
 }

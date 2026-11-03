@@ -30,7 +30,8 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-A API fica em `http://localhost:8000`.
+A API fica em `http://localhost:8000`. O seed cria uma conta de demonstração:
+`demo@cofrinho.test` com senha `password`.
 
 Frontend, em outro terminal:
 

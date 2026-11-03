@@ -2,14 +2,14 @@
 
 namespace App\Actions;
 
-use App\Models\Expense;
+use App\Models\User;
 
 class SummarizeMonth
 {
-    public function handle(string $month): array
+    public function handle(User $user, string $month): array
     {
         // SUM e GROUP BY rodam no banco; o PHP só recebe o resultado pronto
-        $byCategory = Expense::query()
+        $byCategory = $user->expenses()
             ->forMonth($month)
             ->join('categories', 'categories.id', '=', 'expenses.category_id')
             ->selectRaw('expenses.category_id, categories.name, SUM(expenses.amount_cents) as total_cents')
@@ -19,7 +19,7 @@ class SummarizeMonth
 
         return [
             'month' => $month,
-            'total_cents' => (int) Expense::query()->forMonth($month)->sum('amount_cents'),
+            'total_cents' => (int) $user->expenses()->forMonth($month)->sum('amount_cents'),
             'by_category' => $byCategory->map(fn ($row) => [
                 'category_id' => $row->category_id,
                 'name' => $row->name,

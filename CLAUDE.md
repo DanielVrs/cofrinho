@@ -41,7 +41,7 @@ Policies/       autorização por usuário
 - Listagens com relacionamento usam eager loading (`with(...)`).
 - Valores monetários em centavos, inteiro (`amount_cents`).
 - Rotas com `Route::apiResource` em `routes/api.php`; route model binding.
-- Status HTTP: 200, 201, 204, 401, 404, 409, 422.
+- Status HTTP: 200, 201, 204, 401, 403, 404, 409, 422.
 - Testes: feature por endpoint (Pest, factories, `RefreshDatabase`) e
   unitários para Actions com regra.
 

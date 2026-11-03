@@ -2,9 +2,17 @@
 
 use App\Models\Category;
 use App\Models\Expense;
+use App\Models\User;
+use Laravel\Sanctum\Sanctum;
+
+// todos os testes deste arquivo rodam com um usuário autenticado
+beforeEach(function () {
+    $this->user = User::factory()->create();
+    Sanctum::actingAs($this->user);
+});
 
 test('lista as categorias', function () {
-    Category::factory()->count(3)->create();
+    Category::factory()->for($this->user)->count(3)->create();
 
     $this->getJson('/api/categories')
         ->assertOk()
@@ -20,7 +28,7 @@ test('cria uma categoria com dados válidos', function () {
 });
 
 test('não cria categoria com nome repetido', function () {
-    Category::factory()->create(['name' => 'Mercado']);
+    Category::factory()->for($this->user)->create(['name' => 'Mercado']);
 
     $this->postJson('/api/categories', ['name' => 'Mercado', 'color' => '#22AA88'])
         ->assertUnprocessable()
@@ -38,7 +46,7 @@ test('responde 404 para categoria inexistente', function () {
 });
 
 test('atualiza uma categoria', function () {
-    $category = Category::factory()->create();
+    $category = Category::factory()->for($this->user)->create();
 
     $this->putJson("/api/categories/{$category->id}", ['name' => 'Novo nome', 'color' => '#000000'])
         ->assertOk()
@@ -46,7 +54,7 @@ test('atualiza uma categoria', function () {
 });
 
 test('remove uma categoria sem lançamentos', function () {
-    $category = Category::factory()->create();
+    $category = Category::factory()->for($this->user)->create();
 
     $this->deleteJson("/api/categories/{$category->id}")->assertNoContent();
 
@@ -54,7 +62,7 @@ test('remove uma categoria sem lançamentos', function () {
 });
 
 test('não remove categoria em uso', function () {
-    $category = Category::factory()->create();
+    $category = Category::factory()->for($this->user)->create();
     Expense::factory()->create(['category_id' => $category->id]);
 
     $this->deleteJson("/api/categories/{$category->id}")

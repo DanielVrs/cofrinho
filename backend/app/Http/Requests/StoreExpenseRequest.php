@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreExpenseRequest extends FormRequest
 {
@@ -17,7 +18,7 @@ class StoreExpenseRequest extends FormRequest
             'description' => ['required', 'string', 'max:120'],
             'amount_cents' => ['required', 'integer', 'min:1'],
             'spent_on' => ['required', 'date'],
-            'category_id' => ['required', 'integer', 'exists:categories,id'],
+            'category_id' => ['required', 'integer', Rule::exists('categories', 'id')->where('user_id', $this->user()->id)],
         ];
     }
 }

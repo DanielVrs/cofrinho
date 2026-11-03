@@ -13,7 +13,7 @@ class Expense extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['description', 'amount_cents', 'spent_on', 'category_id'];
+    protected $fillable = ['description', 'amount_cents', 'spent_on', 'category_id', 'user_id'];
 
     protected function casts(): array
     {
@@ -42,5 +42,10 @@ class Expense extends Model
     protected function forCategory(Builder $query, int $categoryId): void
     {
         $query->where('category_id', $categoryId);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

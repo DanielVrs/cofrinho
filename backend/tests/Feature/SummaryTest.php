@@ -2,10 +2,17 @@
 
 use App\Models\Category;
 use App\Models\Expense;
+use App\Models\User;
+use Laravel\Sanctum\Sanctum;
+
+beforeEach(function () {
+    $this->user = User::factory()->create();
+    Sanctum::actingAs($this->user);
+});
 
 test('resume o mês com total geral e por categoria', function () {
-    $mercado = Category::factory()->create(['name' => 'Mercado']);
-    $lazer = Category::factory()->create(['name' => 'Lazer']);
+    $mercado = Category::factory()->for($this->user)->create(['name' => 'Mercado']);
+    $lazer = Category::factory()->for($this->user)->create(['name' => 'Lazer']);
 
     Expense::factory()->create(['category_id' => $mercado->id, 'amount_cents' => 1000, 'spent_on' => '2026-11-01']);
     Expense::factory()->create(['category_id' => $mercado->id, 'amount_cents' => 2500, 'spent_on' => '2026-11-15']);

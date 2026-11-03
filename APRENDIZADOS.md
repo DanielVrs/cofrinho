@@ -50,3 +50,15 @@ O bootstrap/app.php. O install:api registrou o routes/api.php lá no parâmetro 
 
 Pergunta: por que usar migrations em vez de criar as tabelas direto no banco?
 Porque a migration é código e vai pro Git. Quem clonar o projeto roda migrate e tem o mesmo banco que eu. Criando direto no banco fica só na minha máquina e sem histórico de mudanças.
+
+## Etapa 4
+
+1. Gerei o CategoryController com --api, já vem com os 5 métodos
+2. Criei os Form Requests com as regras de name e color
+3. Criei o CategoryResource, que define o JSON de saída
+4. Registrei as 5 rotas com Route::apiResource
+5. O {category} da URL vira objeto sozinho (route model binding), id inexistente dá 404
+6. Testei com curl: 200, 201, 204, 422 e 404
+
+Pergunta: o que acontece desde a chegada de um POST até a resposta 201?
+Entra pelo index.php, o bootstrap monta a app e acha a rota. Antes do controller roda o Form Request, se falhar volta 422. Passou, o store faz o Category::create, o Resource monta o JSON e volta 201.

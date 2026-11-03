@@ -77,3 +77,15 @@ Float arredonda mal, 0.1 + 0.2 não dá 0.3 exato. Com inteiro a conta é sempre
 
 Pergunta: o que é o problema N+1?
 Uma consulta pra buscar a lista e mais uma por item pra buscar a relação. Com 100 lançamentos são 101 consultas. Testei: com with foram 2 consultas, sem with foram 6 pra 5 lançamentos.
+
+## Etapa 6
+
+1. Criei dois scopes no Expense, forMonth e forCategory, pedaços de consulta com nome
+2. Form Request pra validar a query string (month no formato Y-m, category_id existente), também funciona em GET
+3. No index usei when() pra aplicar cada filtro só se veio na URL, e paginate(15) no lugar do get()
+4. Criei a Action SummarizeMonth, que faz SUM com GROUP BY e JOIN direto no banco
+5. Rota GET /api/summary num controller invokable
+6. Testei: filtros juntos e separados, paginação com meta, resumo, mês inválido 422
+
+Pergunta: por que somar no banco em vez de carregar tudo e somar no PHP?
+O banco já é feito pra isso. Somando no PHP eu trago todos os lançamentos pela rede e gasto memória pra devolver 5 números. No banco ele devolve só uma linha por categoria.

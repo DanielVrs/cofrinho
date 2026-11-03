@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\IndexExpenseRequest;
 use App\Http\Requests\StoreExpenseRequest;
 use App\Http\Requests\UpdateExpenseRequest;
 use App\Http\Resources\ExpenseResource;
@@ -10,10 +11,19 @@ use Illuminate\Http\Response;
 
 class ExpenseController extends Controller
 {
-    public function index()
+    public function index(IndexExpenseRequest $request)
     {
+        $month = $request->validated('month');
+        $categoryId = $request->validated('category_id');
+
         // with('category'): carrega todas as categorias em uma consulta só (evita o N+1)
-        $expenses = Expense::with('category')->orderByDesc('spent_on')->orderByDesc('id')->get();
+        // when(): só aplica o filtro se o parâmetro veio na query string
+        $expenses = Expense::with('category')
+            ->when($month, fn ($query) => $query->forMonth($month))
+            ->when($categoryId, fn ($query) => $query->forCategory((int) $categoryId))
+            ->orderByDesc('spent_on')
+            ->orderByDesc('id')
+            ->paginate(15);
 
         return ExpenseResource::collection($expenses);
     }

@@ -74,3 +74,57 @@ button:hover {
 .status.error {
   color: #b91c1c;
 }
+
+.expense-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.expense-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.expense-form input,
+.expense-form select {
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font: inherit;
+}
+
+.field-error {
+  color: #b91c1c;
+}
+
+.form-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.expense-item.editing {
+  display: block;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+@media (max-width: 480px) {
+  .expense-form {
+    grid-template-columns: 1fr;
+  }
+}

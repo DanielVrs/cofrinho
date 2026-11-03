@@ -125,3 +125,15 @@ O React não fica vigiando variável. Ele só redesenha o componente quando eu c
 
 Pergunta: o que é CORS, e por que funciona no Postman mas falha no navegador?
 CORS é uma regra do navegador. A página em localhost:5173 chamando localhost:8000 é outra origem, e o navegador só entrega a resposta se o servidor mandar o cabeçalho Access-Control-Allow-Origin liberando. Postman e curl não são navegador, não aplicam essa regra.
+
+## Etapa 10
+
+1. Criei o ExpenseForm, formulário controlado: o valor de cada input fica num useState
+2. O mesmo formulário serve pra criar e pra editar, muda só os valores iniciais
+3. O select de categoria é carregado da API com um hook useCategories
+4. O valor digitado em reais vira centavos antes de enviar (parseReais)
+5. O hook useExpenses ganhou add, update e remove. Cada um chama a API e atualiza a lista local sem recarregar
+6. Erro 422 da API aparece ao lado do campo. Botão fica desabilitado enquanto envia. Remover pede confirmação
+
+Pergunta: por que validar no backend se o frontend também pode validar?
+O frontend roda no navegador da pessoa, ela controla tudo ali. Dá pra pular a validação pelo DevTools ou chamando a API direto com curl. O backend é o único lugar que eu controlo, toda requisição passa por ele. Frontend valida pra dar resposta rápida, backend valida pra nada inválido entrar no banco.

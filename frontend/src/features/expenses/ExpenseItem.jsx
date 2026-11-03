@@ -2,7 +2,7 @@ import { formatCents } from '../../utils/money'
 import { formatDate } from '../../utils/date'
 
 // recebe um lançamento por props e desenha uma linha
-export default function ExpenseItem({ expense, onRemove }) {
+export default function ExpenseItem({ expense, onEdit, onRemove }) {
   return (
     <li className="expense-item">
       <span className="expense-color" style={{ background: expense.category.color }} />
@@ -13,7 +13,10 @@ export default function ExpenseItem({ expense, onRemove }) {
         </small>
       </div>
       <span className="expense-amount">{formatCents(expense.amount_cents)}</span>
-      <button type="button" onClick={() => onRemove(expense.id)}>
+      <button type="button" onClick={() => onEdit(expense)}>
+        Editar
+      </button>
+      <button type="button" onClick={() => onRemove(expense)}>
         Remover
       </button>
     </li>

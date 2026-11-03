@@ -1,23 +1,54 @@
+import { useState } from 'react'
+import ExpenseForm from './ExpenseForm'
 import ExpenseItem from './ExpenseItem'
+import { useCategories } from '../../hooks/useCategories'
 import { useExpenses } from '../../hooks/useExpenses'
 
 export default function ExpenseList() {
-  const { expenses, setExpenses, loading, error } = useExpenses()
+  const { expenses, loading, error, add, update, remove } = useExpenses()
+  const { categories } = useCategories()
+  const [editing, setEditing] = useState(null) // lançamento em edição, ou null
 
-  function handleRemove(id) {
-    setExpenses(expenses.filter((expense) => expense.id !== id))
+  async function handleUpdate(values) {
+    await update(editing.id, values)
+    setEditing(null)
   }
 
-  // três estados antes da lista: carregando, erro e vazia
-  if (loading) return <p className="status">Carregando...</p>
-  if (error) return <p className="status error">{error}</p>
-  if (expenses.length === 0) return <p className="status">Nenhum lançamento.</p>
+  async function handleRemove(expense) {
+    if (!window.confirm(`Remover "${expense.description}"?`)) return
+    try {
+      await remove(expense.id)
+    } catch (err) {
+      window.alert(err.message)
+    }
+  }
 
   return (
-    <ul className="expense-list">
-      {expenses.map((expense) => (
-        <ExpenseItem key={expense.id} expense={expense} onRemove={handleRemove} />
-      ))}
-    </ul>
+    <>
+      <h2>Novo lançamento</h2>
+      <ExpenseForm categories={categories} onSubmit={add} />
+
+      <h2>Lançamentos</h2>
+      {loading && <p className="status">Carregando...</p>}
+      {error && <p className="status error">{error}</p>}
+      {!loading && !error && expenses.length === 0 && <p className="status">Nenhum lançamento.</p>}
+
+      <ul className="expense-list">
+        {expenses.map((expense) =>
+          editing?.id === expense.id ? (
+            <li key={expense.id} className="expense-item editing">
+              <ExpenseForm
+                categories={categories}
+                expense={expense}
+                onSubmit={handleUpdate}
+                onCancel={() => setEditing(null)}
+              />
+            </li>
+          ) : (
+            <ExpenseItem key={expense.id} expense={expense} onEdit={setEditing} onRemove={handleRemove} />
+          ),
+        )}
+      </ul>
+    </>
   )
 }

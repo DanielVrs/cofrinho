@@ -89,3 +89,15 @@ Uma consulta pra buscar a lista e mais uma por item pra buscar a relação. Com 
 
 Pergunta: por que somar no banco em vez de carregar tudo e somar no PHP?
 O banco já é feito pra isso. Somando no PHP eu trago todos os lançamentos pela rede e gasto memória pra devolver 5 números. No banco ele devolve só uma linha por categoria.
+
+## Etapa 7
+
+1. Criei as factories de Category e Expense, geram registros falsos pros testes
+2. Liguei o RefreshDatabase no tests/Pest.php, vinha comentado
+3. Os testes rodam num SQLite em memória (phpunit.xml), não mexem no meu banco
+4. Escrevi 20 testes em 3 arquivos: categorias, lançamentos e resumo. Cobrem 201, 422, 409, 404, filtro por mês e categoria, paginação e resumo
+5. php artisan test passa tudo em 0,3s
+6. Quebrei a regra do 409 de propósito e o teste falhou. Deu 500 em vez de 204 porque a chave estrangeira no banco também impede apagar
+
+Pergunta: o que o RefreshDatabase faz, e o que aconteceria sem ele?
+Roda as migrations num banco limpo e desfaz tudo no fim de cada teste. Sem ele um teste veria os dados do outro: o de nome repetido ia depender da ordem e o de paginação ia contar lançamento dos outros.

@@ -3,6 +3,8 @@ services:
   app:
     build: ./backend
     image: cofrinho-app          # nome da imagem, pra o worker usar a mesma
+    environment:
+      PHP_CLI_SERVER_WORKERS: 10   # o servidor embutido do PHP atende 10 requisições ao mesmo tempo
     ports:
       - "8000:8000"          # porta do computador : porta do container
     volumes:

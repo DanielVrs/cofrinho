@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\CategoryInUseException;
+use App\Exceptions\InsufficientBalanceException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -26,5 +27,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (CategoryInUseException $e) => response()->json(
             ['message' => $e->getMessage()],
             409,
+        ));
+
+        // saldo insuficiente vira 422, no mesmo formato dos erros de validação
+        $exceptions->render(fn (InsufficientBalanceException $e) => response()->json(
+            ['message' => $e->getMessage(), 'errors' => ['amount_cents' => [$e->getMessage()]]],
+            422,
         ));
     })->create();

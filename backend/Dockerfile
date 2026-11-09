@@ -30,4 +30,5 @@ COPY --chown=app:app . .
 RUN composer dump-autoload --optimize
 
 EXPOSE 8000
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# --no-reload: sem ele o artisan serve ignora PHP_CLI_SERVER_WORKERS e atende uma requisição por vez
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]

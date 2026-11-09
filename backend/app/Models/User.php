@@ -39,4 +39,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Export::class);
     }
+
+    public function vaults(): HasMany
+    {
+        return $this->hasMany(Vault::class);
+    }
 }

@@ -254,3 +254,19 @@ O pgAdmin roda dentro de um container, na mesma rede interna do Compose, então 
 
 Pergunta: qual a diferença entre o volume ./backend e o volume pgdata?
 O ./backend é um bind mount: uma pasta do meu computador aparece dentro do container, então edito o código aqui e o container vê na hora. É por isso que o vendor da imagem fica escondido e o composer install precisa rodar de novo na primeira vez. O pgdata é um volume nomeado, gerenciado pelo Docker: os dados do Postgres ficam lá, fora do container, e sobrevivem ao down. Só o down -v apaga.
+
+## Etapa 16
+
+1. Adicionei o serviço redis no compose.yaml, imagem redis:8, com healthcheck de redis-cli ping. No .env troquei CACHE_STORE=database por redis e REDIS_HOST=redis
+2. Cliente: escolhi o predis, que é só um pacote do Composer e funciona em qualquer lugar. A extensão PhpRedis é mais rápida, mas teria que compilar no Dockerfile, e aqui a diferença não importa
+3. O SummarizeMonth ficou dentro de um Cache::remember com a chave summary:idDoUsuario:mes e 10 minutos de TTL. A primeira chamada roda o SUM no Postgres e guarda; as seguintes devolvem o que está no Redis
+4. Invalidação: criei um ExpenseObserver ligado ao model com #[ObservedBy]. Ao salvar ou apagar um lançamento ele apaga a chave daquele mês. Se a edição mudou a data de mês, apaga os dois meses
+5. Pra enxergar, liguei um DB::listen no AppServiceProvider que grava cada SQL no log quando DB_LOG_QUERIES=true. Primeira chamada do resumo: 1 consulta com SUM. Segunda: zero. As consultas que sobraram são da sessão, que continua no Postgres porque SESSION_DRIVER=database
+6. No redis-cli -n 1 vi a chave com prefixo do Laravel e o TTL em 599 segundos. Depois de um POST de lançamento a chave sumiu e o resumo veio atualizado
+7. Testes novos no SummaryCacheTest: cache guardado, atualização ao criar, editar e remover, e duas contas com resumos separados. 46 testes
+
+Pergunta: o que aconteceria se a chave do cache não tivesse o id do usuário?
+O primeiro usuário a pedir o resumo do mês gravaria o dele no Redis, e todos os outros receberiam esse mesmo resumo por 10 minutos. Vazamento de dados entre contas. Com o id na chave cada um tem a sua.
+
+Pergunta: o que acontece com o Cofrinho se o container do Redis parar?
+O resumo quebra, porque o Cache::remember tenta falar com o Redis e dá erro de conexão. O cache virou dependência. Num produto real o Redis teria redundância ou o código trataria a falha e iria direto ao banco.

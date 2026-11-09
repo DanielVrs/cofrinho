@@ -19,6 +19,9 @@ return [
 
     'default' => env('DB_CONNECTION', 'sqlite'),
 
+    // grava cada consulta no log (só pra estudo, nunca em produção)
+    'log_queries' => (bool) env('DB_LOG_QUERIES', false),
+
     /*
     |--------------------------------------------------------------------------
     | Database Connections

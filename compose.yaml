@@ -9,6 +9,8 @@ services:
     depends_on:
       db:
         condition: service_healthy   # só sobe depois que o Postgres responde
+      redis:
+        condition: service_healthy
 
   # Banco de dados
   db:
@@ -21,6 +23,14 @@ services:
       - pgdata:/var/lib/postgresql   # dados fora do container (Postgres 18 usa este caminho)
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U cofrinho -d cofrinho"]
+      interval: 5s
+      retries: 10
+
+  # Cache, filas e locks, tudo em memória
+  redis:
+    image: redis:8
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       retries: 10
 

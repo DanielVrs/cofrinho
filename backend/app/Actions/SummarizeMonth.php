@@ -3,10 +3,36 @@
 namespace App\Actions;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 
 class SummarizeMonth
 {
+    // TTL: depois de 10 minutos a chave some sozinha, mesmo que ninguém a apague
+    public const TTL_MINUTES = 10;
+
     public function handle(User $user, string $month): array
+    {
+        // primeira chamada roda a consulta e guarda; as seguintes devolvem o guardado
+        return Cache::remember(
+            self::cacheKey($user->id, $month),
+            now()->addMinutes(self::TTL_MINUTES),
+            fn () => $this->summarize($user, $month),
+        );
+    }
+
+    // o id do usuário na chave impede que uma conta receba o resumo da outra
+    public static function cacheKey(int $userId, string $month): string
+    {
+        return "summary:{$userId}:{$month}";
+    }
+
+    // invalidação: chamado quando um lançamento daquele mês muda
+    public static function forget(int $userId, string $month): void
+    {
+        Cache::forget(self::cacheKey($userId, $month));
+    }
+
+    private function summarize(User $user, string $month): array
     {
         // SUM e GROUP BY rodam no banco; o PHP só recebe o resultado pronto
         $byCategory = $user->expenses()

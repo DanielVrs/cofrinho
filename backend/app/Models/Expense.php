@@ -2,13 +2,17 @@
 
 namespace App\Models;
 
+use App\Observers\ExpenseObserver;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+// o observer apaga o cache do resumo quando um lançamento é salvo ou removido
+#[ObservedBy(ExpenseObserver::class)]
 class Expense extends Model
 {
     use HasFactory;

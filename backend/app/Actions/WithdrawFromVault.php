@@ -5,24 +5,28 @@ namespace App\Actions;
 use App\Enums\MovementType;
 use App\Exceptions\InsufficientBalanceException;
 use App\Models\Vault;
+use Illuminate\Support\Facades\DB;
 
 class WithdrawFromVault
 {
-    // VERSÃO INGÊNUA, de propósito: lê, confere, calcula, salva.
-    // Duas requisições ao mesmo tempo leem o mesmo saldo e as duas passam na conferência.
+    // CORREÇÃO 1: transação + lockForUpdate.
+    // O SELECT ... FOR UPDATE tranca a linha do cofre até o COMMIT. A segunda requisição
+    // fica parada no SELECT e, quando consegue ler, já vê o saldo descontado pela primeira.
     public function handle(Vault $vault, int $amountCents): Vault
     {
-        $balance = $vault->balance_cents;             // 1. lê
+        return DB::transaction(function () use ($vault, $amountCents) {
+            $locked = Vault::whereKey($vault->getKey())->lockForUpdate()->firstOrFail(); // 1. lê trancando a linha
 
-        if ($balance < $amountCents) {                // 2. confere
-            throw new InsufficientBalanceException();
-        }
+            if ($locked->balance_cents < $amountCents) {                                  // 2. confere
+                throw new InsufficientBalanceException();                                 // rollback: nada foi escrito
+            }
 
-        usleep(300000); // TEMPORÁRIO: 0,3 s pra alargar a janela entre conferir e salvar
+            usleep(300000); // TEMPORÁRIO: a janela continua larga, mas agora ninguém mais entra nela
 
-        $vault->update(['balance_cents' => $balance - $amountCents]);   // 3. calcula e salva
-        $vault->movements()->create(['type' => MovementType::Withdraw, 'amount_cents' => $amountCents]);
+            $locked->update(['balance_cents' => $locked->balance_cents - $amountCents]);  // 3. calcula e salva
+            $locked->movements()->create(['type' => MovementType::Withdraw, 'amount_cents' => $amountCents]);
 
-        return $vault->refresh();
+            return $locked;                                                               // COMMIT solta o lock
+        });
     }
 }

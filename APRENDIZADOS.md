@@ -234,3 +234,23 @@ Imagem é o pacote pronto e só leitura, com o programa e tudo que ele precisa, 
 
 Pergunta: por que a tabela sumiu no passo 4?
 Porque o dado ficava no disco do container, e docker rm -f apaga o container inteiro. O container novo nasce da imagem, limpo. Com volume nomeado o dado fica fora do container e sobrevive.
+
+## Etapa 15
+
+1. Escrevi o backend/Dockerfile a partir da php:8.4-cli: instala a extensão pdo_pgsql, copia o Composer da imagem oficial, cria um usuário com o meu UID pra os arquivos do volume não ficarem de root, copia composer.json e composer.lock antes do resto do código e roda o composer install. Assim a camada das dependências fica em cache e só é refeita quando elas mudam
+2. Criei o compose.yaml na raiz com três serviços: app (a imagem do Dockerfile, porta 8000), db (postgres:18 com healthcheck e volume pgdata) e pgadmin (porta 5050 com volume pgadmindata). O app só sobe depois que o pg_isready do db responde
+3. No .env troquei o SQLite por pgsql com DB_HOST=db e o banco, usuário e senha iguais aos do Compose. O .env.example ficou igual, com um comentário de como voltar pro SQLite sem Docker
+4. docker compose up --build subiu tudo, docker compose exec app php artisan migrate --seed criou as 8 tabelas no Postgres e a conta demo. O frontend não mudou nada, continua chamando localhost:8000
+5. Testes: o phpunit.xml usa SQLite em memória. Decidi manter, porque é rápido e não depende do banco estar de pé. Rodei dentro do container e os 41 passaram
+6. Provei os volumes: docker compose down e up mantém os dados; docker compose down -v apaga o pgdata e o banco volta vazio, zero tabelas
+7. No pgAdmin cadastrei o servidor com host db, vi a tabela migrations, as colunas de expenses e a chave estrangeira pra categories, e um lançamento criado no React apareceu na hora. Um SELECT com SUM e GROUP BY no Query Tool deu o mesmo total que o /api/summary
+8. README reescrito: o caminho principal agora é docker compose up, com uma seção pra rodar sem Docker
+
+Pergunta: por que DB_HOST é db e não localhost?
+Cada container tem a própria rede. Dentro do container do app, localhost é o próprio app, não tem Postgres lá. O Compose cria uma rede interna onde cada serviço é encontrado pelo nome, então db é o endereço do container do Postgres.
+
+Pergunta: no pgAdmin o host é db, mas no cliente da Etapa 14 era localhost. Por quê?
+O pgAdmin roda dentro de um container, na mesma rede interna do Compose, então chega ao banco pelo nome db. Um cliente instalado no Windows está fora dessa rede e só enxerga o banco pela porta publicada com -p no meu computador, que é o localhost.
+
+Pergunta: qual a diferença entre o volume ./backend e o volume pgdata?
+O ./backend é um bind mount: uma pasta do meu computador aparece dentro do container, então edito o código aqui e o container vê na hora. É por isso que o vendor da imagem fica escondido e o composer install precisa rodar de novo na primeira vez. O pgdata é um volume nomeado, gerenciado pelo Docker: os dados do Postgres ficam lá, fora do container, e sobrevivem ao down. Só o down -v apaga.

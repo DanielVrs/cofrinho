@@ -1,0 +1,42 @@
+services:
+  # API Laravel, construída a partir de backend/Dockerfile
+  app:
+    build: ./backend
+    ports:
+      - "8000:8000"          # porta do computador : porta do container
+    volumes:
+      - ./backend:/var/www/html   # a pasta do projeto aparece dentro do container
+    depends_on:
+      db:
+        condition: service_healthy   # só sobe depois que o Postgres responde
+
+  # Banco de dados
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: cofrinho
+      POSTGRES_USER: cofrinho
+      POSTGRES_PASSWORD: segredo
+    volumes:
+      - pgdata:/var/lib/postgresql   # dados fora do container (Postgres 18 usa este caminho)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cofrinho -d cofrinho"]
+      interval: 5s
+      retries: 10
+
+  # Interface web do Postgres, em http://localhost:5050
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@cofrinho.com
+      PGADMIN_DEFAULT_PASSWORD: segredo
+    volumes:
+      - pgadmindata:/var/lib/pgadmin
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
+  pgadmindata:

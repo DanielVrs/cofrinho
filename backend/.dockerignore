@@ -1,0 +1,11 @@
+# O que não entra na imagem
+vendor/
+node_modules/
+.env
+.env.backup
+database/*.sqlite
+storage/logs/*
+storage/framework/cache/data/*
+storage/framework/sessions/*
+storage/framework/views/*
+.phpunit.result.cache

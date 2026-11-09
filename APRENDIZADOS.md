@@ -218,3 +218,19 @@ Token no localStorage é lido por qualquer JavaScript da página. Um script mali
 3. O request<T> do client diz qual JSON espera, então quem chama listCategories() já recebe Category[] sem adivinhar
 4. Props de cada componente viraram uma interface. Erro que o tipo pegou: o AuthForm genérico não aceitava LoginInput porque interface não tem assinatura de índice; resolvi com a restrição { [K in keyof T]: string }
 5. O build agora roda tsc antes do vite build, então erro de tipo quebra o build
+
+## Etapa 14
+
+1. Instalei o Docker Desktop no Windows com o motor WSL 2 e liguei a integração com o Ubuntu. docker run hello-world funcionou no terminal do WSL
+2. Subi um Postgres 18 avulso com docker run: senha por variável de ambiente e -p 5432:5432 pra porta do container aparecer no meu computador. docker ps mostra o container e docker logs mostra o banco pronto
+3. Criei uma tabela com psql dentro do container, removi o container com docker rm -f e subi outro igual: a tabela sumiu
+4. Repeti com -v cofrinho-pg:/var/lib/postgresql. Removi e subi de novo com o mesmo volume: a tabela continuou lá
+5. Descobri que a imagem já declara /var/lib/postgresql como volume, então mesmo sem -v o Docker cria um volume anônimo. Só que cada container novo ganha outro volume anônimo, por isso o dado parece sumir. Dar nome ao volume é o que faz o container novo reencontrar o dado
+6. No Postgres 18 o caminho é /var/lib/postgresql, não mais /var/lib/postgresql/data. Montar no caminho antigo não guarda nada
+7. Container não é máquina virtual: ele compartilha o kernel do sistema e só isola processos, por isso sobe em segundos. Não instalei cliente gráfico, conferi a porta 5432 aberta de fora do container e o pgAdmin da Etapa 15 vai cobrir essa parte
+
+Pergunta: qual a diferença entre imagem e container?
+Imagem é o pacote pronto e só leitura, com o programa e tudo que ele precisa, baixado do Docker Hub. Container é a imagem rodando, com disco próprio e descartável. Da mesma imagem saem quantos containers eu quiser.
+
+Pergunta: por que a tabela sumiu no passo 4?
+Porque o dado ficava no disco do container, e docker rm -f apaga o container inteiro. O container novo nasce da imagem, limpo. Com volume nomeado o dado fica fora do container e sobrevive.

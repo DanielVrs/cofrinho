@@ -2,6 +2,7 @@ services:
   # API Laravel, construída a partir de backend/Dockerfile
   app:
     build: ./backend
+    image: cofrinho-app          # nome da imagem, pra o worker usar a mesma
     ports:
       - "8000:8000"          # porta do computador : porta do container
     volumes:
@@ -9,6 +10,20 @@ services:
     depends_on:
       db:
         condition: service_healthy   # só sobe depois que o Postgres responde
+      redis:
+        condition: service_healthy
+
+  # Worker: mesma imagem do app, mas em vez do servidor HTTP roda a fila
+  worker:
+    image: cofrinho-app
+    command: php artisan queue:work --sleep=1
+    volumes:
+      - ./backend:/var/www/html
+    depends_on:
+      app:
+        condition: service_started
+      db:
+        condition: service_healthy
       redis:
         condition: service_healthy
 

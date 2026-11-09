@@ -1,4 +1,4 @@
-import { request, requestBlob } from './client'
+import { request } from './client'
 import type { Expense, ExpenseFilters, ExpenseInput, Paginated } from '../types'
 
 // monta ?month=2026-11&category_id=2&page=1 só com o que foi informado
@@ -24,9 +24,4 @@ export async function updateExpense(id: number, values: ExpenseInput): Promise<E
 
 export function deleteExpense(id: number): Promise<null> {
   return request<null>(`/expenses/${id}`, { method: 'DELETE' })
-}
-
-// CSV do mês, como Blob, para o navegador baixar
-export function exportExpenses(month: string): Promise<Blob> {
-  return requestBlob(`/expenses/export?month=${month}`)
 }

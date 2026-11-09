@@ -7,9 +7,8 @@ import ExpenseList from './ExpenseList'
 import { useCategories } from '../../hooks/useCategories'
 import { useExpenses } from '../../hooks/useExpenses'
 import { useSummary } from '../../hooks/useSummary'
+import { useExport } from '../../hooks/useExport'
 import { currentMonth } from '../../utils/date'
-import { downloadBlob } from '../../utils/download'
-import { exportExpenses } from '../../api/expenses'
 import type { Expense, ExpenseFilters as Filters, ExpenseInput } from '../../types'
 
 // a tela: junta os hooks e distribui para os componentes
@@ -20,6 +19,7 @@ export default function ExpensesPage() {
   const { categories } = useCategories()
   const { expenses, meta, loading, error, add, update, remove } = useExpenses(filters)
   const { summary, reload: reloadSummary } = useSummary(filters.month)
+  const { start: startExport, pending: exporting, error: exportError } = useExport()
 
   // mudar mês ou categoria volta para a página 1
   function handleFilterChange(change: Partial<Filters>) {
@@ -36,14 +36,6 @@ export default function ExpensesPage() {
     await update(editing.id, values)
     setEditing(null)
     reloadSummary()
-  }
-
-  async function handleExport() {
-    try {
-      downloadBlob(await exportExpenses(filters.month), `lancamentos-${filters.month}.csv`)
-    } catch (err) {
-      window.alert(err instanceof Error ? err.message : 'Erro inesperado.')
-    }
   }
 
   async function handleRemove(expense: Expense) {
@@ -72,10 +64,11 @@ export default function ExpensesPage() {
 
       <div className="section-head">
         <h2>Lançamentos</h2>
-        <button type="button" onClick={handleExport}>
-          Exportar CSV
+        <button type="button" onClick={() => startExport(filters.month)} disabled={exporting}>
+          {exporting ? 'Gerando CSV...' : 'Exportar mês'}
         </button>
       </div>
+      {exportError && <p className="status error">{exportError}</p>}
       <ExpenseList
         expenses={expenses}
         categories={categories}

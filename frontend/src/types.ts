@@ -80,3 +80,15 @@ export interface RegisterInput {
 
 // erros de validação (422): campo -> mensagens
 export type FieldErrors = Record<string, string[] | undefined>
+
+export type ExportStatus = 'pending' | 'done' | 'failed'
+
+// um pedido de exportação de CSV: nasce pending e o worker muda para done ou failed
+export interface Export {
+  id: number
+  month: string
+  status: ExportStatus
+  error: string | null
+  download_url: string | null
+  created_at: string
+}

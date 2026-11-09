@@ -270,3 +270,19 @@ O primeiro usuário a pedir o resumo do mês gravaria o dele no Redis, e todos o
 
 Pergunta: o que acontece com o Cofrinho se o container do Redis parar?
 O resumo quebra, porque o Cache::remember tenta falar com o Redis e dá erro de conexão. O cache virou dependência. Num produto real o Redis teria redundância ou o código trataria a falha e iria direto ao banco.
+
+## Etapa 17
+
+1. QUEUE_CONNECTION=redis no .env. Criei a tabela exports (user_id, month, status, path, error) e o model Export com um enum ExportStatus: pending, done ou failed
+2. POST /api/exports cria a linha como pending, despacha o job ExportExpensesCsv e responde 202 na hora. GET /api/exports/{id} devolve o status e, quando pronta, o link de download
+3. O job reaproveita a Action que já gerava o CSV, salva o arquivo no storage e muda o status pra done. Tem tries 3 e backoff 5: três tentativas com 5 segundos entre elas. O método failed() só roda quando todas falharam, e marca failed com a mensagem do erro
+4. No compose.yaml o serviço worker usa a mesma imagem do app, mas o comando é php artisan queue:work em vez do servidor. Os dois compartilham a pasta backend, por isso o app enxerga o CSV que o worker gravou
+5. No React o botão Exportar mês chama o POST e um hook useExport consulta o status a cada 2 segundos. Quando vem done, baixa o arquivo; quando vem failed, mostra o erro
+6. Experimentos: com sleep(5) no job e sem reiniciar o worker, continuou instantâneo. Reiniciei o worker e aí sim demorou 5 segundos. Com o worker parado, o pedido ficou pending e o job ficou esperando na lista do Redis; ao voltar, rodou. Com um throw forçado, o log mostrou 3 tentativas, a exportação ficou failed e apareceu uma linha em failed_jobs. Consertei o código, reiniciei o worker, queue:retry all, e ela terminou como done
+7. Removi a rota síncrona antiga GET /expenses/export e o teste dela. 50 testes
+
+Pergunta: por que não gerar o CSV dentro da requisição?
+Porque a requisição fica presa até o arquivo ficar pronto. Com poucos lançamentos não importa, mas com milhares o navegador fica esperando, o servidor segura um processo e pode estourar o tempo limite. Na fila a resposta é imediata e o trabalho pesado acontece em outro processo, que pode até estar em outra máquina.
+
+Pergunta: você mudou o código do job e o worker continuou com o comportamento antigo. Por quê?
+O queue:work é um processo que fica rodando. Ele carrega o código uma vez quando sobe e não relê a cada job, diferente do artisan serve, que carrega a cada requisição. Por isso mudou o job, tem que reiniciar o worker. Em produção se usa queue:restart depois de cada deploy.

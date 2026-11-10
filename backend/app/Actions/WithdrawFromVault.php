@@ -9,24 +9,25 @@ use Illuminate\Support\Facades\DB;
 
 class WithdrawFromVault
 {
-    // CORREÇÃO 1: transação + lockForUpdate.
-    // O SELECT ... FOR UPDATE tranca a linha do cofre até o COMMIT. A segunda requisição
-    // fica parada no SELECT e, quando consegue ler, já vê o saldo descontado pela primeira.
+    // CORREÇÃO 2: update atômico. Conferir e descontar viram um único comando SQL:
+    //   UPDATE vaults SET balance_cents = balance_cents - ? WHERE id = ? AND balance_cents >= ?
+    // O Postgres tranca a linha sozinho durante o UPDATE; quem chega depois espera e, quando
+    // roda, reavalia o WHERE sobre o saldo já descontado. Se o WHERE não bate, zero linhas mudam.
     public function handle(Vault $vault, int $amountCents): Vault
     {
+        // a transação continua: saldo e movimentação mudam juntos ou não mudam
         return DB::transaction(function () use ($vault, $amountCents) {
-            $locked = Vault::whereKey($vault->getKey())->lockForUpdate()->firstOrFail(); // 1. lê trancando a linha
+            $changed = Vault::whereKey($vault->getKey())
+                ->where('balance_cents', '>=', $amountCents)   // a conferência vai dentro do SQL
+                ->decrement('balance_cents', $amountCents);    // devolve quantas linhas mudaram
 
-            if ($locked->balance_cents < $amountCents) {                                  // 2. confere
-                throw new InsufficientBalanceException();                                 // rollback: nada foi escrito
+            if ($changed === 0) {
+                throw new InsufficientBalanceException();      // nenhuma linha: faltou saldo
             }
 
-            usleep(300000); // TEMPORÁRIO: a janela continua larga, mas agora ninguém mais entra nela
+            $vault->movements()->create(['type' => MovementType::Withdraw, 'amount_cents' => $amountCents]);
 
-            $locked->update(['balance_cents' => $locked->balance_cents - $amountCents]);  // 3. calcula e salva
-            $locked->movements()->create(['type' => MovementType::Withdraw, 'amount_cents' => $amountCents]);
-
-            return $locked;                                                               // COMMIT solta o lock
+            return $vault->refresh();
         });
     }
 }

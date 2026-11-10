@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\CreateExpense;
 use App\Http\Requests\IndexExpenseRequest;
 use App\Http\Requests\StoreExpenseRequest;
 use App\Http\Requests\UpdateExpenseRequest;
@@ -31,13 +32,20 @@ class ExpenseController extends Controller
         return ExpenseResource::collection($expenses);
     }
 
-    public function store(StoreExpenseRequest $request)
+    public function store(StoreExpenseRequest $request, CreateExpense $createExpense)
     {
-        $expense = $request->user()->expenses()->create($request->validated())->load('category');
+        $expense = $createExpense->handle($request->user(), $request->validated())->load('category');
 
-        return (new ExpenseResource($expense))
+        $response = (new ExpenseResource($expense))
             ->response()
             ->setStatusCode(Response::HTTP_CREATED);
+
+        // repetição com a mesma Idempotency-Key: mesma resposta de antes, mais um cabeçalho avisando
+        if (! $expense->wasRecentlyCreated) {
+            $response->header('Idempotent-Replayed', 'true');
+        }
+
+        return $response;
     }
 
     public function show(Expense $expense)

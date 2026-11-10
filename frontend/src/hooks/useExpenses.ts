@@ -40,8 +40,8 @@ export function useExpenses({ month, categoryId, page }: ExpenseFilters) {
 
   const reload = () => setVersion((current) => current + 1)
 
-  async function add(values: ExpenseInput) {
-    await createExpense(values)
+  async function add(values: ExpenseInput, idempotencyKey: string) {
+    await createExpense(values, idempotencyKey)
     reload()
   }
 

@@ -43,6 +43,19 @@ Serviços:
 
 O seed cria uma conta de demonstração: `demo@cofrinho.test` com senha `password`.
 
+Para subir dois workers da fila ao mesmo tempo:
+
+```sh
+docker compose up -d --scale worker=2
+```
+
+O `POST /api/expenses` aceita o cabeçalho `Idempotency-Key` (o frontend manda um
+UUID por envio). Repetir a requisição com a mesma chave devolve o lançamento já
+criado, com o cabeçalho `Idempotent-Replayed: true`, em vez de criar outro.
+
+Scripts de experimento, na raiz: `scripts/race-withdraw.sh` (saques simultâneos
+num cofre) e `scripts/double-click.sh [--key]` (o mesmo lançamento duas vezes).
+
 `docker compose down` para tudo e mantém os dados. `docker compose down -v` apaga
 também os volumes, ou seja, o banco.
 

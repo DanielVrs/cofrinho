@@ -26,8 +26,8 @@ export default function ExpensesPage() {
     setFilters((current) => ({ ...current, ...change, page: 1 }))
   }
 
-  async function handleAdd(values: ExpenseInput) {
-    await add(values)
+  async function handleAdd(values: ExpenseInput, idempotencyKey: string) {
+    await add(values, idempotencyKey)
     reloadSummary()
   }
 

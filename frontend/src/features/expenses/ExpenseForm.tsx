@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import FieldError from '../../components/FieldError'
 import { ApiError } from '../../api/client'
 import { centsToInput, parseReais } from '../../utils/money'
@@ -28,7 +28,8 @@ function toFormValues(expense: Expense | null): FormValues {
 interface ExpenseFormProps {
   categories: Category[]
   expense?: Expense | null
-  onSubmit: (values: ExpenseInput) => Promise<void>
+  // idempotencyKey: a mesma chave enquanto esta tentativa não der certo; só a criação usa
+  onSubmit: (values: ExpenseInput, idempotencyKey: string) => Promise<void>
   onCancel?: () => void
 }
 
@@ -37,6 +38,8 @@ export default function ExpenseForm({ categories, expense = null, onSubmit, onCa
   const [values, setValues] = useState<FormValues>(() => toFormValues(expense))
   const [errors, setErrors] = useState<FieldErrors>({})
   const [submitting, setSubmitting] = useState(false)
+  // chave de idempotência da tentativa atual. useRef: mudar não redesenha e o valor sobrevive entre envios
+  const idempotencyKey = useRef<string | null>(null)
 
   function handleChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = event.target
@@ -48,13 +51,21 @@ export default function ExpenseForm({ categories, expense = null, onSubmit, onCa
     setSubmitting(true)
     setErrors({})
 
+    // ??= : só gera um UUID novo se não houver um pendente. Se o envio anterior falhou
+    // (rede caiu, API fora), o reenvio usa a mesma chave e a API não duplica o lançamento
+    idempotencyKey.current ??= crypto.randomUUID()
+
     try {
-      await onSubmit({
-        description: values.description,
-        amount_cents: parseReais(values.amount), // reais -> centavos
-        spent_on: values.spent_on || null,
-        category_id: values.category_id ? Number(values.category_id) : null,
-      })
+      await onSubmit(
+        {
+          description: values.description,
+          amount_cents: parseReais(values.amount), // reais -> centavos
+          spent_on: values.spent_on || null,
+          category_id: values.category_id ? Number(values.category_id) : null,
+        },
+        idempotencyKey.current,
+      )
+      idempotencyKey.current = null // deu certo: a próxima tentativa é outra operação, outra chave
       if (!expense) setValues(emptyValues) // criou: limpa o formulário
     } catch (err) {
       // 422: erros por campo; outro erro: mensagem geral

@@ -17,7 +17,7 @@ class Expense extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['description', 'amount_cents', 'spent_on', 'category_id', 'user_id'];
+    protected $fillable = ['description', 'amount_cents', 'spent_on', 'category_id', 'user_id', 'idempotency_key'];
 
     protected function casts(): array
     {

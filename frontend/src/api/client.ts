@@ -19,6 +19,7 @@ export class ApiError extends Error {
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE'
   body?: unknown
+  headers?: Record<string, string> // cabeçalhos extras, como Idempotency-Key
 }
 
 function readCookie(name: string): string | null {
@@ -31,8 +32,8 @@ async function fetchCsrfCookie(): Promise<void> {
   await fetch(`${ORIGIN}/sanctum/csrf-cookie`, { credentials: 'include' })
 }
 
-async function send(path: string, { method = 'GET', body }: RequestOptions = {}, retrying = false): Promise<Response> {
-  const headers: Record<string, string> = { Accept: 'application/json', 'Content-Type': 'application/json' }
+async function send(path: string, { method = 'GET', body, headers: extra = {} }: RequestOptions = {}, retrying = false): Promise<Response> {
+  const headers: Record<string, string> = { Accept: 'application/json', 'Content-Type': 'application/json', ...extra }
 
   let response: Response
   try {
@@ -56,7 +57,7 @@ async function send(path: string, { method = 'GET', body }: RequestOptions = {},
   // 419: token CSRF velho (sessão expirou). Pega um novo e tenta uma vez
   if (response.status === 419 && !retrying) {
     await fetchCsrfCookie()
-    return send(path, { method, body }, true)
+    return send(path, { method, body, headers: extra }, true)
   }
 
   if (response.status === 401) {

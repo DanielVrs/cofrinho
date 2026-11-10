@@ -12,8 +12,14 @@ export function listExpenses({ month, categoryId, page }: Partial<ExpenseFilters
   return request<Paginated<Expense>>(`/expenses${query ? `?${query}` : ''}`)
 }
 
-export async function createExpense(values: ExpenseInput): Promise<Expense> {
-  const { data } = await request<{ data: Expense }>('/expenses', { method: 'POST', body: values })
+// idempotencyKey: um UUID por tentativa de criar. Se a mesma tentativa chegar duas vezes
+// na API (clique duplo, rede repetindo), ela devolve o lançamento já criado em vez de duplicar
+export async function createExpense(values: ExpenseInput, idempotencyKey: string): Promise<Expense> {
+  const { data } = await request<{ data: Expense }>('/expenses', {
+    method: 'POST',
+    body: values,
+    headers: { 'Idempotency-Key': idempotencyKey },
+  })
   return data
 }
 

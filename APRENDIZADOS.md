@@ -286,3 +286,29 @@ Porque a requisição fica presa até o arquivo ficar pronto. Com poucos lançam
 
 Pergunta: você mudou o código do job e o worker continuou com o comportamento antigo. Por quê?
 O queue:work é um processo que fica rodando. Ele carrega o código uma vez quando sobe e não relê a cada job, diferente do artisan serve, que carrega a cada requisição. Por isso mudou o job, tem que reiniciar o worker. Em produção se usa queue:restart depois de cada deploy.
+
+## Etapa 18
+
+1. Criei as tabelas vaults (user_id, name, balance_cents) e vault_movements (vault_id, type, amount_cents), os models Vault e VaultMovement e o enum MovementType: deposit ou withdraw. Rotas: POST /api/vaults, GET /api/vaults/{id}, POST /api/vaults/{id}/deposit e withdraw. Saque maior que o saldo lança InsufficientBalanceException, que vira 422
+2. O saque ingênuo faz quatro passos: lê o saldo, confere, calcula e salva. Pus um usleep de 0,3 segundo entre conferir e salvar pra alargar a janela do bug
+3. O script scripts/race-withdraw.sh loga com cookie, cria um cofre com R$ 100, dispara 10 saques de R$ 80 ao mesmo tempo com xargs -P 10 e mostra o saldo e a soma das movimentações
+4. Na primeira rodada o bug não apareceu, porque o artisan serve atende uma requisição por vez. Pus PHP_CLI_SERVER_WORKERS=10 no compose e continuou igual: o artisan serve ignora a variável sem a opção --no-reload. Com a opção no Dockerfile, 7 saques passaram, saldo final R$ 20 e soma das movimentações R$ -460. Saiu R$ 560 de um cofre de R$ 100: cada requisição leu 100, calculou 20 e salvou 20 por cima das outras
+5. Correção 1, em commit próprio: DB::transaction com lockForUpdate na leitura do cofre. O SELECT ... FOR UPDATE tranca a linha até o COMMIT; as outras requisições param no SELECT e, quando leem, já veem o saldo descontado. 1 saque passou, 9 deram 422, saldo R$ 20 igual à soma. Testei também o lockForUpdate sem a transação: 10 passaram, saiu R$ 800, pior que a versão ingênua
+6. Correção 2, em commit próprio: update atômico, UPDATE vaults SET balance_cents = balance_cents - 8000 WHERE id = ? AND balance_cents >= 8000. O decrement devolve quantas linhas mudaram; zero significa que faltou saldo. Tirei o usleep. Com 10 e com 20 saques, 1 passou e o saldo bateu
+7. No pgAdmin rodei BEGIN e SELECT * FROM vaults WHERE id = 1 FOR UPDATE sem COMMIT, e o saque pela API ficou pendurado. Em pg_stat_activity minha sessão aparecia como idle in transaction e o UPDATE da API como active, esperando Lock transactionid, bloqueado pelo meu pid. Em pg_locks o pedido de lock da API estava com granted = f. Dei COMMIT e o saque respondeu 200 na hora, depois de 227 segundos esperando
+8. Conferi no banco saldo contra soma das movimentações: nos cofres das versões com bug, 2000 contra -46000 e -70000; nos das corrigidas, 2000 contra 2000. 57 testes
+
+Pergunta: desenhe uma linha do tempo com duas requisições mostrando onde o bug acontece.
+t1 A lê saldo 100
+t2 B lê saldo 100
+t3 A confere 100 >= 80 e passa
+t4 B confere 100 >= 80 e passa
+t5 A salva saldo 20 e grava um saque de 80
+t6 B salva saldo 20 e grava um saque de 80
+O bug está entre t2 e t5: B leu antes de A salvar, então as duas trabalharam com um saldo que já não existia. No fim o saldo é 20, mas saíram 160.
+
+Pergunta: por que lockForUpdate() fora de uma transação não resolve?
+Porque o lock dura até o fim da transação. Sem BEGIN, cada comando é a própria transação, e o lock é solto assim que o SELECT termina, antes da conferência e do UPDATE. Na prática vira um SELECT comum. Testei: 10 saques passaram.
+
+Pergunta: qual das duas correções você escolheria, e por quê?
+O update atômico. É um comando só, não existe janela entre conferir e salvar, não preciso lembrar de trancar antes de ler, e o banco faz o lock sozinho. O lockForUpdate fica pra quando preciso ler vários dados e decidir no PHP antes de escrever, como uma regra que não cabe num WHERE.

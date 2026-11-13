@@ -312,3 +312,23 @@ Porque o lock dura até o fim da transação. Sem BEGIN, cada comando é a próp
 
 Pergunta: qual das duas correções você escolheria, e por quê?
 O update atômico. É um comando só, não existe janela entre conferir e salvar, não preciso lembrar de trancar antes de ler, e o banco faz o lock sozinho. O lockForUpdate fica pra quando preciso ler vários dados e decidir no PHP antes de escrever, como uma regra que não cabe num WHERE.
+
+## Etapa 19
+
+1. Reproduzi com o script scripts/double-click.sh, que manda o mesmo POST /api/expenses duas vezes ao mesmo tempo. Sem chave: 201 e 201, dois lançamentos no banco
+2. Migration: coluna idempotency_key na tabela expenses e índice único em (user_id, idempotency_key). Nulo não conta no índice, então requisição sem chave continua livre. A chave é por usuário, outro usuário pode usar a mesma
+3. O StoreExpenseRequest lê o cabeçalho Idempotency-Key e coloca em idempotency_key nos dados validados, por cima de qualquer valor do corpo, com no máximo 64 caracteres. Criei a Action CreateExpense: tenta inserir direto e, se o banco recusar com UniqueConstraintViolationException, busca o lançamento que já tem aquela chave e devolve. O controller responde o mesmo 201 e, quando o lançamento não nasceu nessa requisição (wasRecentlyCreated falso), manda o cabeçalho Idempotent-Replayed: true
+4. No React o ExpenseForm guarda um UUID num useRef, gerado com crypto.randomUUID na primeira tentativa. Deu certo, zera; falhou, o reenvio vai com a mesma chave. A chave passa pelo useExpenses e pelo createExpense, que manda o cabeçalho
+5. Com a chave: 201 e 201 com Idempotent-Replayed, um lançamento só. O id 5 sumiu da tabela porque o insert recusado gastou um número da sequência do Postgres, e sequência não volta atrás
+6. No job ExportExpensesCsv, Cache::lock("export:{user}:{mês}", 60)->block(15, ...): espera o lock, roda e solta no fim, mesmo com erro. Se não conseguir em 15 segundos, lança LockTimeoutException e o job tenta de novo pelas regras da Etapa 17. Os 60 segundos são a validade do lock, pra ele sumir sozinho se o worker morrer no meio
+7. docker compose up -d --scale worker=2 e duas exportações do mesmo mês ao mesmo tempo, com um sleep(3) temporário no job: com o lock, a segunda só começou quando a primeira terminou, cada uma num container diferente; sem o lock compartilhado, as duas rodaram juntas
+8. Testes: 7 de idempotência (sem chave cria dois, mesma chave cria um e repete o mesmo id, dados diferentes com a mesma chave devolvem o original, chaves diferentes, chave por usuário, chave longa dá 422, chave no corpo é ignorada) e 3 do lock (mesmo mês espera, meses diferentes não, lock solto depois de erro). 67 testes
+
+Pergunta: por que o botão desabilitado da Etapa 10 não basta?
+Porque ele só impede o segundo clique na tela. A requisição pode se repetir sem clique nenhum: a rede cai depois que o servidor gravou e o navegador ou o usuário tenta de novo, um proxy reenvia, duas abas abertas. A proteção tem que estar no servidor, que é quem grava.
+
+Pergunta: por que conferir se a chave já existe antes de inserir também tem uma race condition?
+Porque são dois comandos. As duas requisições conferem ao mesmo tempo, nenhuma acha a chave e as duas inserem. É a mesma janela do saque da Etapa 18. Com o índice único a conferência acontece dentro do próprio insert, e o banco garante que só um passa.
+
+Pergunta: por que o lock fica no Redis, e não em uma variável do PHP?
+Porque cada worker é um processo separado, aqui até um container separado, e uma variável só existe dentro do processo que a criou. O Redis é um lugar só que os dois enxergam. O mesmo vale quando a API roda em vários servidores.

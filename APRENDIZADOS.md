@@ -332,3 +332,20 @@ Porque são dois comandos. As duas requisições conferem ao mesmo tempo, nenhum
 
 Pergunta: por que o lock fica no Redis, e não em uma variável do PHP?
 Porque cada worker é um processo separado, aqui até um container separado, e uma variável só existe dentro do processo que a criou. O Redis é um lugar só que os dois enxergam. O mesmo vale quando a API roda em vários servidores.
+
+## Entrega
+
+Pergunta: qual foi o erro mais difícil, e como você o resolveu?
+A race condition da Etapa 18 que não aparecia. Rodei o script, 1 saque passou e 9 deram 422, parecia que o código ingênuo estava certo. Coloquei PHP_CLI_SERVER_WORKERS=10 e continuou igual. A resposta estava no log do container: o artisan serve ignora essa variável sem a opção --no-reload. Com a opção, 7 saques passaram. O difícil não foi o bug, foi fazer o bug aparecer. Antes disso, o que mais me enganou foi na Etapa 12: o update dava 422 em vez de 403, porque a validação rodava antes da autorização. Resolvi movendo a checagem pro authorize() do Form Request.
+
+Pergunta: o que você entendeu melhor fazendo do que lendo?
+Concorrência. Ler que duas requisições podem ler o mesmo saldo não me convenceu; ver 7 saques de R$ 80 passarem num cofre de R$ 100 e a soma dar R$ -460 convenceu. O mesmo com o lock no pgAdmin: deixei uma transação aberta e o saque da API ficou 227 segundos parado esperando o meu COMMIT. E o N+1 da Etapa 5: contar 6 consultas pra 5 lançamentos e 2 com o with.
+
+Pergunta: o que ainda não ficou claro?
+Os níveis de isolamento do Postgres: entendi que o UPDATE espera o lock e reavalia o WHERE, mas não sei o que mudaria com REPEATABLE READ ou SERIALIZABLE. Como o Sanctum decide que uma requisição é "stateful" a partir do Origin. E o que acontece se o lock do Redis vencer (60 segundos) com o job ainda rodando.
+
+Pergunta: o que você faria diferente se começasse de novo?
+Começar com cookies do Sanctum em vez de token, porque troquei depois e refiz login, client e testes. Docker desde a Etapa 0, porque mudar de SQLite pra Postgres mexeu em .env, README e seed no meio do caminho. E TypeScript desde o começo em vez de migrar todos os arquivos no final.
+
+Pergunta: como você usou IA e outras fontes de pesquisa?
+Usei o Claude Code em todas as etapas: ele escreveu o código e eu pedi explicação de cada arquivo e de cada comando, perguntei até entender e anotei aqui com as minhas palavras. Antes de cada commit li o que ia entrar. Quando a versão deixava dúvida, a referência foi a documentação oficial do Laravel, do React, do Postgres e do Docker. O que eu não entendia, pedia de novo de um jeito mais simples.

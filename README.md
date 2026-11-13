@@ -6,9 +6,10 @@ Backend em Laravel (API) e frontend em React. Projeto do teste técnico guiado.
 ## Estrutura
 
 - `backend/`: API em Laravel 13. Banco Postgres no Docker (ou SQLite, sem Docker).
-- `frontend/`: interface em React 19 com Vite.
+- `frontend/`: interface em React 19 com Vite e TypeScript.
 - `exercicios/`: exercícios em PHP puro.
-- `compose.yaml`: sobe a API, o Postgres e o pgAdmin com um comando.
+- `scripts/`: experimentos de concorrência (race condition e clique duplo).
+- `compose.yaml`: sobe a API, o worker da fila, o Postgres, o Redis e o pgAdmin com um comando.
 - `APRENDIZADOS.md`: respostas e anotações de cada etapa.
 
 ## Requisitos
@@ -36,10 +37,12 @@ montada dentro do container e esconde o `vendor/` que veio na imagem.
 
 Serviços:
 
-- API em `http://localhost:8000`.
-- pgAdmin em `http://localhost:5050` (login `admin@cofrinho.com`, senha `segredo`).
+- `app`: API em `http://localhost:8000`.
+- `worker`: processa a fila (exportação de CSV). Mesma imagem do `app`, comando `php artisan queue:work`.
+- `db`: Postgres 18, só na rede interna do Compose.
+- `redis`: cache do resumo, fila e locks, só na rede interna.
+- `pgadmin`: `http://localhost:5050` (login `admin@cofrinho.com`, senha `segredo`).
   Ao cadastrar o servidor, use host `db`, porta `5432`, banco, usuário e senha `cofrinho` / `cofrinho` / `segredo`.
-- Postgres só na rede interna do Compose, no nome `db`.
 
 O seed cria uma conta de demonstração: `demo@cofrinho.test` com senha `password`.
 
@@ -68,6 +71,7 @@ Frontend, em outro terminal:
 
 ```sh
 cd frontend
+cp .env.example .env
 npm install
 npm run dev
 ```
@@ -89,8 +93,28 @@ php artisan migrate --seed
 php artisan serve
 ```
 
-No `.env`, troque `DB_CONNECTION=pgsql` por `DB_CONNECTION=sqlite` e apague as
-linhas `DB_HOST` a `DB_PASSWORD`.
+Sem Docker não há Postgres nem Redis, então ajuste o `.env` antes do `migrate`:
+
+- `DB_CONNECTION=sqlite` e apague as linhas `DB_HOST` a `DB_PASSWORD`;
+- `CACHE_STORE=database` (o cache do resumo e os locks vão para o banco);
+- `QUEUE_CONNECTION=sync` (a exportação roda na própria requisição, sem worker).
+  Para ver a fila de verdade, use `QUEUE_CONNECTION=database` e rode
+  `php artisan queue:work` em outro terminal.
+
+## API
+
+Todas as rotas ficam sob `/api`. Fora `register`, `login` e `ping`, todas exigem sessão.
+
+| Método e rota | O que faz |
+|---|---|
+| `POST /register`, `POST /login`, `POST /logout`, `GET /user` | conta e sessão (cookie do Sanctum) |
+| `GET, POST /categories`, `GET, PUT, DELETE /categories/{id}` | categorias; remover categoria com lançamentos responde 409 |
+| `GET, POST /expenses`, `GET, PUT, DELETE /expenses/{id}` | lançamentos; `GET` aceita `?month=2026-11&category_id=1&page=1` |
+| `GET /summary?month=2026-11` | total do mês por categoria, com cache de 10 minutos no Redis |
+| `POST /exports`, `GET /exports/{id}`, `GET /exports/{id}/download` | CSV do mês gerado na fila: responde 202 e o cliente consulta o status |
+| `GET, POST /vaults`, `GET /vaults/{id}`, `POST /vaults/{id}/deposit`, `POST /vaults/{id}/withdraw` | cofres; saque acima do saldo responde 422 |
+
+Valores em centavos (`amount_cents`). Erros de validação respondem 422 com `errors` por campo.
 
 ## Testes
 
